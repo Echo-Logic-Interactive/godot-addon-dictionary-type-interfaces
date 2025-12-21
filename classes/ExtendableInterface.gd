@@ -233,10 +233,10 @@ func set_value(key: String, value) -> void:
 
 		if not is_valid:
 			if _validation_mode == TypeInterfaces.ValidationMode.STRICT:
-				ErrorHandler.push_error("Invalid data after setting %s in STRICT mode" % key)
+				push_error("Invalid data after setting %s in STRICT mode" % key)
 				_data.erase(key)  # Rollback change
 			else:
-				ErrorHandler.push_warning("Validation warning after setting %s in LOOSE mode" % key)
+				push_warning("Validation warning after setting %s in LOOSE mode" % key)
 
 
 ## Override update to respect validation mode
@@ -253,10 +253,10 @@ func update(data: Dictionary) -> void:
 
 		if not is_valid:
 			if _validation_mode == TypeInterfaces.ValidationMode.STRICT:
-				ErrorHandler.push_error("Invalid data after update in STRICT mode")
+				push_error("Invalid data after update in STRICT mode")
 				_data = backup  # Rollback changes
 			else:
-				ErrorHandler.push_warning("Validation warning after update in LOOSE mode")
+				push_warning("Validation warning after update in LOOSE mode")
 
 
 # ==============================================================================
@@ -289,16 +289,12 @@ func _convert_to_interface(interface_name: String, data: Dictionary):
 	var script_path = "res://scripts/interfaces/%s.gd" % interface_name
 
 	if not FileAccess.file_exists(script_path):
-		ErrorHandler.push_error(
-			"[ExtendableInterface] Interface class not found: %s" % interface_name
-		)
+		push_error("[ExtendableInterface] Interface class not found: %s" % interface_name)
 		return null
 
 	var interface_script = load(script_path)
 	if not interface_script:
-		ErrorHandler.push_error(
-			"[ExtendableInterface] Failed to load interface: %s" % interface_name
-		)
+		push_error("[ExtendableInterface] Failed to load interface: %s" % interface_name)
 		return null
 
 	# Create instance with same validation mode as parent
@@ -324,9 +320,7 @@ func _convert_array_to_interfaces(interface_name: String, array: Array) -> Array
 			# Already an interface instance
 			result.append(item)
 		else:
-			ErrorHandler.push_warning(
-				"[ExtendableInterface] Invalid item type in Array<%s>" % interface_name
-			)
+			push_warning("[ExtendableInterface] Invalid item type in Array<%s>" % interface_name)
 
 	return result
 
