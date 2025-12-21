@@ -1,0 +1,33 @@
+# Godot 4+ specific ignores
+.godot/
+*.import
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*~
+
+# IDE specific
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs and temp files
+*.log
+*.tmp
+*.temp
+
+# Build artifacts
+*.o
+*.pyc
+__pycache__/
+
+# Python virtual environment (if using for tools)
+venv/
+.venv/
