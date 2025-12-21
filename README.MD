@@ -47,7 +47,6 @@ Introducing Godot Dictionary Interfaces, a lightweight addon that brings **TypeS
 - [API Reference](#-api-reference)
 - [Modding Support](#-modding-support)
 - [Performance](#-performance)
-- [Examples](#-examples)
 - [Contributing](#-contributing)
 
 ---
@@ -572,124 +571,14 @@ var player = IPlayerData.new(data)
 
 ---
 
-## 💡 Examples
-
-### Example Interfaces from Game
-
-The addon includes complete example interfaces:
-
-```gdscript
-# Player character data
-res://scripts/interfaces/IPlayerData.gd
-
-# Inventory items
-res://scripts/interfaces/IItem.gd
-
-# Caught fish
-res://scripts/interfaces/IFish.gd
-
-# Weather conditions
-res://scripts/interfaces/IWeatherData.gd
-
-# Quest tracking
-res://scripts/interfaces/IQuest.gd
-```
-
-### Simple Save System
-
-```gdscript
-class_name GameSave extends TypedDict
-
-func _get_schema() -> Dictionary:
-    return {
-        "player": "IPlayerData",
-        "inventory": "Array<IItem>",
-        "quests": "Array<IQuest>",
-        "save_time": "int",
-        "save_version": "String"
-    }
-
-# Save game
-func save_game(player: IPlayerData, inventory: Array, quests: Array) -> void:
-    var save_data = GameSave.new({
-        "player": player.to_dict(),
-        "inventory": inventory.map(func(item): return item.to_dict()),
-        "quests": quests.map(func(quest): return quest.to_dict()),
-        "save_time": Time.get_unix_time_from_system(),
-        "save_version": "1.0.0"
-    })
-
-    var file = FileAccess.open("user://save.json", FileAccess.WRITE)
-    file.store_string(JSON.stringify(save_data.to_dict()))
-
-# Load game
-func load_game() -> GameSave:
-    var file = FileAccess.open("user://save.json", FileAccess.READ)
-    var json = JSON.parse_string(file.get_as_text())
-    return GameSave.new(json)  # Auto-validates!
-```
-
-### Repository Pattern
-
-```gdscript
-class_name PlayerRepository
-
-var _players: Dictionary = {}  # player_id -> IPlayerData
-
-func save(player: IPlayerData) -> void:
-    _players[player.get_value("id")] = player
-
-func find(player_id: String) -> IPlayerData:
-    return _players.get(player_id)
-
-func all() -> Array[IPlayerData]:
-    return _players.values()
-
-func export_all() -> Array[Dictionary]:
-    return _players.values().map(func(p): return p.to_dict())
-```
-
-### Factory Pattern with Validation
-
-```gdscript
-class_name PlayerFactory
-
-static func create_new_player(name: String) -> IPlayerData:
-    var player = IPlayerData.new({
-        "name": name,
-        "level": 1,
-        "health": 100.0,
-        "max_health": 100.0,
-        "position": Vector2.ZERO,
-        "experience": 0
-    })
-    return player  # Already validated!
-
-static func from_template(template_id: String) -> IPlayerData:
-    var templates = {
-        "warrior": {"health": 150.0, "max_health": 150.0},
-        "mage": {"health": 80.0, "max_health": 80.0}
-    }
-
-    var data = templates.get(template_id, {})
-    data["level"] = 1
-    data["experience"] = 0
-    return IPlayerData.new(data)
-```
-
----
-
 ## 🤝 Contributing
 
 We welcome contributions! Here are some areas we'd love help with:
 
 **Core Features:**
 
-- Build-time validation tooling
+- Additional type checking functionality (Generics etc)
 - Visual schema editor
-- JSON Schema import/export
-- Migration tools for schema changes
-- Performance profiling utilities
 
 **Modding Support:**
 
@@ -702,14 +591,7 @@ We welcome contributions! Here are some areas we'd love help with:
 
 - More example interfaces
 - Video tutorials
-- Best practices guide
 - Translation to other languages
-
-**Quality:**
-
-- Unit tests
-- Integration tests
-- Performance benchmarks
 
 ### How to Contribute
 

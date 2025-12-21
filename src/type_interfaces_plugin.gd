@@ -9,7 +9,9 @@ func _enter_tree() -> void:
 	print("Dictionary Type Interfaces plugin activated")
 
 	# Register autoload singleton for runtime validation
-	add_autoload_singleton("TypeInterfaces", "res://addons/type_interfaces/type_interfaces_runtime.gd")
+	add_autoload_singleton(
+		"TypeInterfaces", "res://addons/type_interfaces/src/type_interfaces_runtime.gd"
+	)
 
 
 func _exit_tree() -> void:
