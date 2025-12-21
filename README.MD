@@ -21,7 +21,7 @@ Introducing Godot Dictionary Interfaces, a lightweight addon that brings **TypeS
 
 ## 📢 Project Status
 
-> [!NOTE] > **Testing Phase** - This addon is almost production-ready and actively maintained. We're testing actual implementation and resolving last minute bugs. Be careful implementing this into existing projects just yet.
+> **Testing Phase** - This addon is almost production-ready and actively maintained. We're testing actual implementation and resolving last minute bugs. Be careful implementing this into existing projects just yet.
 
 ---
 
@@ -506,7 +506,7 @@ player.extend_schema({"custom_data": "Dictionary"})
 player.extend_schema({"custom_stats": "ICustomStats"})
 ```
 
-See [Example Game Interfaces](#examples) for reference implementations.
+See [Example Game Interfaces](?tab=readme-ov-file#examples) for reference implementations.
 
 ### ModdingAPI Utilities
 
