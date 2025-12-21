@@ -507,35 +507,6 @@ player.extend_schema({"custom_stats": "ICustomStats"})
 
 See [Example Game Interfaces](?tab=readme-ov-file#examples) for reference implementations.
 
-### ModdingAPI Utilities
-
-```gdscript
-# Register your mod
-ModdingAPI.register_mod("com.author.modname", {
-    "name": "My Awesome Mod",
-    "version": "1.0.0",
-    "author": "Your Name",
-    "description": "Does cool things"
-})
-
-# Add custom validators
-ModdingAPI.register_validator("IPlayerData", func(data: Dictionary) -> bool:
-    # Custom validation logic
-    if data.has("level") and data.level < 0:
-        return false
-    return true
-)
-
-# Extend schemas globally (affects all new instances)
-ModdingAPI.extend_interface_schema("IPlayerData", {
-    "stamina": "float",
-    "mana": "float"
-})
-
-# Export mod registry
-ModdingAPI.export_mod_registry("res://mod_info.json")
-```
-
 ---
 
 ## 🎯 Performance
