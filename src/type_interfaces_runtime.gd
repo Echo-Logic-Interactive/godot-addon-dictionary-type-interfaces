@@ -87,6 +87,8 @@ func _check_type(value: Variant, expected_type: String) -> bool:
 
 	# Basic type matching
 	var type_name = _get_type_name(value)
+
+	# gdlint: disable=max-returns
 	return type_name == expected_type or _is_compatible_type(type_name, expected_type)
 
 

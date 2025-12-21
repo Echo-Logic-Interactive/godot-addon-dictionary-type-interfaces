@@ -13,7 +13,13 @@ func _enter_tree() -> void:
 		"TypeInterfaces", "res://addons/type_interfaces/src/type_interfaces_runtime.gd"
 	)
 
+	# Register ModdingAPI singleton for mod support
+	add_autoload_singleton(
+		"ModdingAPI", "res://addons/type_interfaces/src/interface_modding_api.gd"
+	)
+
 
 func _exit_tree() -> void:
 	print("Dictionary Type Interfaces plugin deactivated")
 	remove_autoload_singleton("TypeInterfaces")
+	remove_autoload_singleton("ModdingAPI")
