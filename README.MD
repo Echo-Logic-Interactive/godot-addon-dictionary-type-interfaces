@@ -1,4 +1,4 @@
-# Type Interfaces for Godot 4.x
+# Dictionary Type Interfaces for Godot 4.x
 
 > **Runtime type validation and structured data objects for GDScript with full modding support**
 
@@ -34,7 +34,7 @@ validation and mod extensibility.
 - 🎯 **Runtime type validation** - Catch data structure errors during development
 - ✨ **Full IDE autocomplete** - Typed properties give you IntelliSense
 - 🔌 **Mod-friendly architecture** - Namespace isolation and schema extension for third-party content
-- 🚀 **Zero runtime overhead** - Validation removed in release builds via `assert()`
+- 🚀 **Minimal runtime overhead** - Validation removed in release builds via `if OS.is_debug_build():`
 - 📦 **Nested interfaces** - Support for complex data structures with validated sub-objects
 - 🛡️ **STRICT/LOOSE modes** - Choose validation strictness per instance
 - 🔄 **Seamless serialization** - Easy dictionary conversion for save/load
