@@ -190,7 +190,7 @@ static func _parse_type_info(
 		"is_extended": not is_base_field
 	}
 
-  var dir_path = interfaces_dir if interfaces_dir else get_interfaces_directory()
+	var dir_path = interfaces_dir if interfaces_dir else get_interfaces_directory()
 
 	# Check for nullable type
 	if type_string_value.ends_with("?"):
