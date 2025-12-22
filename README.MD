@@ -24,21 +24,28 @@ validation and mod extensibility.
 
 ## 📢 Project Status
 
-> **Testing Phase** - This addon is almost production-ready and actively maintained. We're testing actual
-> implementation and resolving last minute bugs. Be careful implementing this into existing projects just yet.
+> **BETA Phase** - This addon is almost production-ready and is actively maintained. We're testing actual
+> implementation and resolving last minute bugs. Be careful implementing this into existing projects just yet and be sure that you want to enforce such a process in your project before starting. This addon is best suited for Typescript engineers moving into Godot.
 
 ---
 
 ## ✨ Features
 
-- 🎯 **Runtime type validation** - Catch data structure errors during development
-- ✨ **Full IDE autocomplete** - Typed properties give you IntelliSense
-- 🔌 **Mod-friendly architecture** - Namespace isolation and schema extension for third-party content
-- 🚀 **Minimal runtime overhead** - Validation removed in release builds via `if OS.is_debug_build():`
-- 📦 **Nested interfaces** - Support for complex data structures with validated sub-objects
-- 🛡️ **STRICT/LOOSE modes** - Choose validation strictness per instance
-- 🔄 **Seamless serialization** - Easy dictionary conversion for save/load
-- 📝 **Self-documenting** - Schema exports to JSON/TypeScript for documentation
+- 🎯 **Development environment type validation**<br>Catch data structure errors during development
+
+- ✨ **Full IDE autocomplete**<br>Typed properties give you IntelliSense
+
+- 🔌 **Mod-friendly architecture**<br>Namespace isolation and schema extension for third-party content
+
+- 🚀 **Minimal runtime overhead**<br>Validation removed in release builds via `if OS.is_debug_build():`
+
+- 📦 **Nested interfaces**<br>Support for complex data structures with validated sub-objects
+
+- 🛡️ **STRICT/LOOSE modes**<br>Choose validation strictness per instance
+
+- 🔄 **Seamless serialization**<br>Easy dictionary conversion for save/load
+
+- 📝 **Self-documenting**<br>Schema exports to JSON/TypeScript for documentation
 
 ---
 
@@ -829,4 +836,3 @@ No attribution required (but appreciated!).
 - **Discussions:** [GitHub Discussions](https://github.com/yourusername/type-interfaces/discussions)
 
 Made with ❤️ for the Godot community
-
