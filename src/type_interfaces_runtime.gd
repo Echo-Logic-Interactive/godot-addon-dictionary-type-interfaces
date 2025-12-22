@@ -9,10 +9,11 @@ enum ValidationMode {
 	LOOSE,  # Dictionary can have extra fields
 }
 
+# Load the utility class to get interfaces directory
+var GetInterfacesDir = load("./utils/get_interfaces_dir.gd")
+
 ## Get the interfaces directory from project settings
-var interface_dir = (
-	preload("res://addons/type_interfaces/classes/SchemaExporter.gd").get_interfaces_directory()
-)
+var interface_dir = GetInterfacesDir.get_interfaces_directory()
 
 
 ## Validate a dictionary against an interface definition
@@ -50,10 +51,10 @@ func validate(
 			var data_snippet = _get_data_snippet(data, field_name)
 			push_error(
 				(
-						"Missing required field: %s%s%s\n  Data: %s"
-						% [field_name, ctx_prefix, caller_info, data_snippet]
-					)
+					"Missing required field: %s%s%s\n  Data: %s"
+					% [field_name, ctx_prefix, caller_info, data_snippet]
 				)
+			)
 			return false
 
 		# Type check
