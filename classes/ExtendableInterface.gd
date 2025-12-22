@@ -207,7 +207,8 @@ func get_registered_mods() -> Array[String]:
 ## Override set_value to respect validation mode
 ## [br][br]
 ## In LOOSE mode, validation only warns. In STRICT mode, validation fails with assertion.
-## Automatically converts Dictionaries to interface instances when the schema specifies an interface type.
+## Automatically converts Dictionaries to interface instances when the schema specifies an
+## interface type.
 func set_value(key: String, value) -> void:
 	var schema = _get_schema()
 

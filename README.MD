@@ -13,15 +13,19 @@ that kept bugging me was the lack of object interfaces, or dictionary interfaces
 
 So what started as bit of a dig around for existing solutions turned into a side-project really quickly.
 
-Introducing Godot Dictionary Interfaces, a lightweight addon that brings **TypeScript-style interfaces** to Godot projects with **built-in modding support**. Define typed data schemas, validate at runtime, and allow third-party mods to extend your data structures safely.
+Introducing Godot Dictionary Interfaces, a lightweight addon that brings **TypeScript-style interfaces** to Godot
+projects with **built-in modding support**. Define typed data schemas, validate at runtime, and allow third-party
+mods to extend your data structures safely.
 
-**Perfect for:** Save systems, inventory data, player stats, quest tracking, or any structured data that needs validation and mod extensibility.
+**Perfect for:** Save systems, inventory data, player stats, quest tracking, or any structured data that needs
+validation and mod extensibility.
 
 ---
 
 ## 📢 Project Status
 
-> **Testing Phase** - This addon is almost production-ready and actively maintained. We're testing actual implementation and resolving last minute bugs. Be careful implementing this into existing projects just yet.
+> **Testing Phase** - This addon is almost production-ready and actively maintained. We're testing actual
+> implementation and resolving last minute bugs. Be careful implementing this into existing projects just yet.
 
 ---
 
@@ -68,6 +72,25 @@ Introducing Godot Dictionary Interfaces, a lightweight addon that brings **TypeS
    `git clone git@github.com:Echo-Logic-Interactive/godot-addon-dictionary-type-interfaces.git`
 
 2. Copy `addons/type_interfaces/` into your project's `addons/` directory
+3. Enable the plugin in **Project Settings → Plugins → Type Interfaces**
+4. The `TypeInterfaces` and `ModdingAPI` singletons will be available automatically
+
+### Configuration
+
+After installation, configure where your interface files are located:
+
+1. Go to **Project → Project Settings**
+2. Navigate to **Application → Type Interfaces → Interfaces Directory**
+3. Set the path to your interfaces folder (default: `res://scripts/interfaces/`)
+
+This setting is used by **SchemaExporter** to find and document your interface files for modders.
+
+**Alternative:** Set it programmatically:
+
+```gdscript
+ProjectSettings.set_setting("application/type_interfaces/interfaces_directory", "res://your/path/")
+```
+
 3. Enable the plugin in **Project Settings → Plugins → Type Interfaces**
 4. The `TypeInterfaces` singleton will be available automatically
 
