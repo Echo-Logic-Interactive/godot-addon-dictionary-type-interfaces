@@ -1,0 +1,398 @@
+name: CI - Lint, Format & Test
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+    types: [opened, synchronize, reopened, ready_for_review]
+
+# Cancel in-progress runs when a new commit is pushed
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Skip CI for draft PRs (saves minutes during development)
+  check-draft:
+    name: Check if Draft PR
+    runs-on: ubuntu-latest
+    outputs:
+      is_draft: ${{ steps.check.outputs.is_draft }}
+    steps:
+      - name: Check draft status
+        id: check
+        run: |
+          if [ "${{ github.event.pull_request.draft }}" == "true" ]; then
+            echo "is_draft=true" >> $GITHUB_OUTPUT
+            echo "⏭️  Skipping CI for draft PR"
+          else
+            echo "is_draft=false" >> $GITHUB_OUTPUT
+          fi
+
+  gdscript-lint:
+    name: GDScript Linting
+    runs-on: ubuntu-latest
+    needs: check-draft
+    if: needs.check-draft.outputs.is_draft != 'true'
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install gdtoolkit
+        run: pip install gdtoolkit
+
+      - name: Run gdlint
+        run: |
+          echo "Running gdlint on all addon scripts..."
+          gdlint --verbose .
+
+  gdscript-format:
+    name: GDScript Format Check
+    runs-on: ubuntu-latest
+    needs: check-draft
+    if: needs.check-draft.outputs.is_draft != 'true'
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install gdtoolkit
+        run: pip install gdtoolkit
+
+      - name: Check formatting
+        run: |
+          echo "Checking code formatting..."
+          gdformat --check .
+
+  addon-structure:
+    name: Addon Structure Validation
+    runs-on: ubuntu-latest
+    needs: check-draft
+    if: needs.check-draft.outputs.is_draft != 'true'
+    timeout-minutes: 3
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate required files
+        run: |
+          echo "Validating addon file structure..."
+
+          required_files=(
+            "plugin.cfg"
+            "README.MD"
+            "src/type_interfaces_plugin.gd"
+            "src/type_interfaces_runtime.gd"
+            "src/interface_modding_api.gd"
+            "classes/TypedDict.gd"
+            "classes/ExtendableInterface.gd"
+            "classes/SchemaExporter.gd"
+            "examples/IExamplePlayer.gd"
+            "examples/IExampleItem.gd"
+            "examples/IExampleQuest.gd"
+            "examples/basic_usage_examples.gd"
+            "examples/test_validation_in_editor.gd"
+          )
+
+          all_found=true
+          for file in "${required_files[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "❌ Missing: $file"
+              all_found=false
+            else
+              echo "✓ Found: $file"
+            fi
+          done
+
+          if [ "$all_found" = false ]; then
+            exit 1
+          fi
+
+          echo ""
+          echo "✅ All required files present"
+
+      - name: Validate plugin.cfg
+        run: |
+          echo "Validating plugin.cfg..."
+
+          required_fields=("name" "description" "author" "version" "script")
+          all_found=true
+
+          for field in "${required_fields[@]}"; do
+            if ! grep -q "^${field}=" plugin.cfg; then
+              echo "❌ Missing field in plugin.cfg: $field"
+              all_found=false
+            else
+              value=$(grep "^${field}=" plugin.cfg | cut -d'=' -f2- | tr -d '"')
+              echo "✓ $field = $value"
+            fi
+          done
+
+          if [ "$all_found" = false ]; then
+            exit 1
+          fi
+
+          echo ""
+          echo "✅ plugin.cfg validation passed"
+
+  documentation:
+    name: Documentation Check
+    runs-on: ubuntu-latest
+    needs: check-draft
+    if: needs.check-draft.outputs.is_draft != 'true'
+    timeout-minutes: 3
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate README
+        run: |
+          if [ ! -f "README.MD" ]; then
+            echo "❌ README.MD not found"
+            exit 1
+          fi
+
+          word_count=$(wc -w < README.MD)
+
+          if [ "$word_count" -lt 500 ]; then
+            echo "❌ README.MD too short ($word_count words, minimum 500)"
+            exit 1
+          fi
+
+          echo "✅ README.MD validation passed ($word_count words)"
+
+      - name: Check for required sections
+        run: |
+          echo "Checking for required README sections..."
+
+          required_sections=(
+            "Installation"
+            "Quick Start"
+            "Features"
+            "Examples"
+            "API Reference"
+            "Performance"
+          )
+
+          all_found=true
+          for section in "${required_sections[@]}"; do
+            if ! grep -qi "## .*$section" README.MD; then
+              echo "⚠️  Section not found: $section"
+              all_found=false
+            else
+              echo "✓ Found section: $section"
+            fi
+          done
+
+          if [ "$all_found" = false ]; then
+            echo ""
+            echo "⚠️  Some recommended sections are missing"
+          else
+            echo ""
+            echo "✅ All recommended sections present"
+          fi
+
+  godot-validation:
+    name: Godot Editor Validation Test
+    runs-on: ubuntu-latest
+    needs: check-draft
+    if: needs.check-draft.outputs.is_draft != 'true'
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download Godot
+        run: |
+          echo "Downloading Godot 4.3..."
+          wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip
+          unzip -q Godot_v4.3-stable_linux.x86_64.zip
+          chmod +x Godot_v4.3-stable_linux.x86_64
+
+          # Create a minimal project.godot for the addon
+          mkdir -p .godot
+          cat > project.godot << 'EOF'
+; Engine configuration file.
+
+config_version=5
+
+[application]
+
+config/name="Type Interfaces Test"
+config/features=PackedStringArray("4.3")
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://")
+EOF
+
+      - name: Install addon
+        run: |
+          echo "Setting up addon in test project..."
+          # Addon is already in root, just need project.godot
+
+      - name: Run editor validation test
+        run: |
+          echo "Running test_validation_in_editor.gd..."
+
+          # Run the editor script
+          ./Godot_v4.3-stable_linux.x86_64 --headless --script examples/test_validation_in_editor.gd --quit 2>&1 | tee test_output.txt
+
+          # Check if test completed successfully
+          if grep -q "EDITOR VALIDATION TEST COMPLETE" test_output.txt; then
+            echo ""
+            echo "✅ Validation test completed successfully"
+
+            # Show any errors that occurred (expected in some tests)
+            if grep -q "ERROR:" test_output.txt; then
+              echo ""
+              echo "Expected validation errors found (this is normal):"
+              grep "ERROR:" test_output.txt || true
+            fi
+
+            exit 0
+          else
+            echo ""
+            echo "❌ Validation test did not complete properly"
+            echo ""
+            echo "Full output:"
+            cat test_output.txt
+            exit 1
+          fi
+
+      - name: Upload test output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-test-output
+          path: test_output.txt
+
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+    needs: check-draft
+    if: needs.check-draft.outputs.is_draft != 'true'
+    timeout-minutes: 3
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check for debug code
+        run: |
+          echo "Scanning for leftover debug code..."
+
+          # Look for common debug patterns
+          debug_patterns=(
+            "print_debug"
+            "breakpoint"
+            "# TODO"
+            "# FIXME"
+            "# HACK"
+          )
+
+          found_issues=false
+          for pattern in "${debug_patterns[@]}"; do
+            matches=$(grep -rn "$pattern" --include="*.gd" . || true)
+            if [ -n "$matches" ]; then
+              echo "⚠️  Found '$pattern':"
+              echo "$matches"
+              echo ""
+              found_issues=true
+            fi
+          done
+
+          if [ "$found_issues" = false ]; then
+            echo "✅ No debug code found"
+          else
+            echo "⚠️  Debug code detected (not blocking CI)"
+          fi
+        continue-on-error: true
+
+      - name: Check @tool annotations
+        run: |
+          echo "Verifying @tool annotations on classes..."
+
+          # Check that core classes have @tool
+          core_files=(
+            "classes/TypedDict.gd"
+            "classes/ExtendableInterface.gd"
+            "src/type_interfaces_runtime.gd"
+          )
+
+          all_ok=true
+          for file in "${core_files[@]}"; do
+            if [ -f "$file" ]; then
+              if ! head -5 "$file" | grep -q "@tool"; then
+                echo "⚠️  Missing @tool annotation: $file"
+                all_ok=false
+              else
+                echo "✓ Has @tool: $file"
+              fi
+            fi
+          done
+
+          if [ "$all_ok" = true ]; then
+            echo ""
+            echo "✅ All core classes have @tool annotation"
+          else
+            echo ""
+            echo "❌ Some core classes missing @tool annotation"
+            exit 1
+          fi
+
+  summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+    needs: [gdscript-lint, gdscript-format, addon-structure, documentation, godot-validation, code-quality]
+    if: always()
+
+    steps:
+      - name: Check results
+        run: |
+          echo "╔════════════════════════════════════════╗"
+          echo "║        CI Pipeline Summary             ║"
+          echo "╚════════════════════════════════════════╝"
+          echo ""
+          echo "GDScript Linting:       ${{ needs.gdscript-lint.result }}"
+          echo "Format Check:           ${{ needs.gdscript-format.result }}"
+          echo "Addon Structure:        ${{ needs.addon-structure.result }}"
+          echo "Documentation:          ${{ needs.documentation.result }}"
+          echo "Godot Validation Test:  ${{ needs.godot-validation.result }}"
+          echo "Code Quality:           ${{ needs.code-quality.result }}"
+          echo ""
+
+          if [ "${{ needs.gdscript-lint.result }}" != "success" ] || \
+             [ "${{ needs.gdscript-format.result }}" != "success" ] || \
+             [ "${{ needs.addon-structure.result }}" != "success" ] || \
+             [ "${{ needs.documentation.result }}" != "success" ] || \
+             [ "${{ needs.godot-validation.result }}" != "success" ] || \
+             [ "${{ needs.code-quality.result }}" != "success" ]; then
+            echo "❌ CI FAILED - Please check the logs above"
+            exit 1
+          else
+            echo "✅ ALL CHECKS PASSED!"
+          fi
