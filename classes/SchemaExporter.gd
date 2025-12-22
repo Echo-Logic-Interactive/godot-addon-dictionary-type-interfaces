@@ -190,6 +190,8 @@ static func _parse_type_info(
 		"is_extended": not is_base_field
 	}
 
+  var dir_path = interfaces_dir if interfaces_dir else get_interfaces_directory()
+
 	# Check for nullable type
 	if type_string_value.ends_with("?"):
 		info.is_nullable = true
@@ -202,11 +204,11 @@ static func _parse_type_info(
 		info.element_type = type_string_value.substr(6, type_string_value.length() - 7)
 
 		# Check if element type is an interface
-		if _is_interface_type(info.element_type, interfaces_dir):
+		if _is_interface_type(info.element_type, dir_path):
 			info.is_interface = true
 
 	# Check if type is an interface (starts with 'I' and file exists)
-	elif _is_interface_type(type_string_value, interfaces_dir):
+	elif _is_interface_type(type_string_value, dir_path):
 		info.is_interface = true
 
 	return info
@@ -217,7 +219,8 @@ static func _is_interface_type(type_string_value: String, interfaces_dir: String
 	if not type_string_value.begins_with("I"):
 		return false
 
-	var script_path = interfaces_dir + "%s.gd" % type_string_value
+	var dir_path = interfaces_dir if interfaces_dir else get_interfaces_directory()
+	var script_path = dir_path + "%s.gd" % type_string_value
 	return FileAccess.file_exists(script_path)
 
 
@@ -230,7 +233,8 @@ static func _is_interface_type(type_string_value: String, interfaces_dir: String
 ## [br]
 ## Returns an instance of the interface, or null if creation fails
 static func _create_interface_instance(interface_name: String, interfaces_dir: String):
-	var script_path = interfaces_dir + "%s.gd" % interface_name
+	var dir_path = interfaces_dir if interfaces_dir else get_interfaces_directory()
+	var script_path = dir_path + "%s.gd" % interface_name
 
 	if not ResourceLoader.exists(script_path):
 		push_error("[SchemaExporter] Interface script not found: %s" % script_path)
@@ -259,7 +263,8 @@ static func _create_interface_instance(interface_name: String, interfaces_dir: S
 ## Dynamically parses the actual GDScript file to extract the class documentation.
 ## Looks for ## comments that appear after the extends statement.
 static func _get_class_description(interface_name: String, interfaces_dir: String) -> String:
-	var file_path = interfaces_dir + "%s.gd" % interface_name
+	var dir_path = interfaces_dir if interfaces_dir else get_interfaces_directory()
+	var file_path = dir_path + "%s.gd" % interface_name
 
 	if not FileAccess.file_exists(file_path):
 		push_warning("[SchemaExporter] File not found: %s" % file_path)
@@ -431,10 +436,11 @@ static func _generate_typescript_content(interfaces_dir: String) -> String:
 	var ts_content = "// Auto-generated TypeScript definitions for game interfaces\n"
 	ts_content += "// Generated: %s\n\n" % Time.get_datetime_string_from_system()
 
-	var interface_classes = get_available_interfaces(interfaces_dir)
+	var dir_path = interfaces_dir if interfaces_dir else get_interfaces_directory()
+	var interface_classes = get_available_interfaces(dir_path)
 
 	for interface_name in interface_classes:
-		var schema_info = get_schema_info(interface_name, interfaces_dir)
+		var schema_info = get_schema_info(interface_name, dir_path)
 		if not schema_info:
 			continue
 
