@@ -112,7 +112,7 @@ jobs:
             "examples/IExampleItem.gd"
             "examples/IExampleQuest.gd"
             "examples/basic_usage_examples.gd"
-            "examples/test_validation_in_editor.gd"
+            "examples/test_validation_ci.gd"
           )
 
           all_found=true
@@ -275,10 +275,10 @@ jobs:
 
       - name: Run editor validation test
         run: |
-          echo "Running test_validation_in_editor.gd..."
+          echo "Running test_validation_ci.gd..."
 
           # Run the editor script from addon examples
-          ./Godot_v4.3-stable_linux.x86_64 --headless --script addons/type_interfaces/examples/test_validation_in_editor.gd --quit 2>&1 | tee test_output.txt
+          ./Godot_v4.3-stable_linux.x86_64 --headless --script addons/type_interfaces/examples/test_validation_ci.gd --quit 2>&1 | tee test_output.txt
 
           # Check if test completed successfully
           if grep -q "EDITOR VALIDATION TEST COMPLETE" test_output.txt; then
