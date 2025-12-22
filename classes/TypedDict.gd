@@ -12,7 +12,8 @@ var _data: Dictionary = {}
 func _init(initial_data: Dictionary = {}) -> void:
 	var schema = _get_schema()
 	if schema and not schema.is_empty():
-		if not TypeInterfaces.validate(initial_data, schema):
+		var context = get_script().resource_path.get_file()
+		if not TypeInterfaces.validate(initial_data, schema, false, context):
 			# Validation already logged the specific error
 			return
 	_data = initial_data.duplicate()
@@ -40,7 +41,8 @@ func set_value(key: String, value) -> void:
 	_data[key] = value
 	var schema = _get_schema()
 	if schema and not schema.is_empty():
-		if not TypeInterfaces.validate(_data, schema):
+		var context = get_script().resource_path.get_file()
+		if not TypeInterfaces.validate(_data, schema, false, context):
 			if OS.is_debug_build():
 				push_error("Invalid data after setting %s" % key)
 				_data.erase(key)  # Rollback change
@@ -52,7 +54,8 @@ func update(data: Dictionary) -> void:
 	_data.merge(data, true)
 	var schema = _get_schema()
 	if schema and not schema.is_empty():
-		if not TypeInterfaces.validate(_data, schema):
+		var context = get_script().resource_path.get_file()
+		if not TypeInterfaces.validate(_data, schema, false, context):
 			if OS.is_debug_build():
 				push_error("Invalid data after update")
 				_data = backup  # Rollback changes

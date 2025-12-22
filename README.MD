@@ -688,7 +688,89 @@ SchemaExporter.export_all_schemas("res://docs/schemas.json", "res://custom/inter
 
 ---
 
-## 🤝 Contributing
+## � Testing & Validation
+
+### Editor Validation Test
+
+The addon includes an interactive validation test script that demonstrates all features and validation behavior. Perfect for:
+
+- **Learning** - See validation in action before writing code
+- **Testing** - Verify addon installation works correctly
+- **Reference** - Example code for every feature
+
+#### How to Run
+
+1. Open the test script: `addons/type_interfaces/examples/test_validation_in_editor.gd`
+2. In Godot Editor, go to **File → Run**
+3. Watch the **Output** panel for test results
+
+#### What It Tests
+
+- ✅ **Valid data creation** - Confirms correct usage patterns
+- ⚠️ **Type mismatches** - Shows validation error messages
+- ⚠️ **Missing fields** - Demonstrates required field checking
+- ✅ **Nullable fields** - Tests optional field handling
+- ✅ **STRICT vs LOOSE modes** - Compares validation strictness
+- ✅ **Items, Quests, Players** - All example interfaces
+- ✅ **Nested data** - Complex object validation
+
+#### Sample Output
+
+```
+======================================================================
+TYPE INTERFACES - EDITOR VALIDATION TEST
+======================================================================
+
+--- Test 1: Valid Player (Should Succeed) ---
+✓ Created player: EditorPlayer (Level 5)
+  Health: 85.0/100.0
+  Position: (100.0, 200.0)
+
+--- Test 2: Invalid Type (Expect Validation Error) ---
+  ERROR: Type mismatch for field 'level': expected int, got String in IExamplePlayer.gd
+  Called from: test_validation_in_editor.gd:76
+  Data: {
+       "name": "InvalidPlayer"
+    >> "level": "not_a_number"
+       "experience": 0
+    ...
+  }
+  Player created despite invalid level type
+  (In debug builds, you should see a validation error above)
+
+--- Test 3: Missing Required Field (Expect Warning) ---
+  ERROR: Missing required field: name in IExamplePlayer.gd
+  Called from: test_validation_in_editor.gd:96
+  Data: {
+    >> "level": 1
+       "experience": 0
+    ...
+  }
+  Created player without 'name' field
+  Name falls back to default: ''
+
+======================================================================
+EDITOR VALIDATION TEST COMPLETE
+======================================================================
+
+✓ All tests ran successfully!
+  Check above for validation errors (expected in some tests)
+```
+
+#### Error Message Features
+
+Validation errors include:
+
+- 📂 **Interface file** - Which interface failed (e.g., `IExamplePlayer.gd`)
+- 📍 **Line number** - Exact location in your code that triggered validation
+- 📋 **Data snippet** - Shows the problematic field (`>>`) with surrounding context
+- 🎯 **Specific issue** - Clear description of what's wrong
+
+This makes debugging data structure issues incredibly fast!
+
+---
+
+## �🤝 Contributing
 
 We welcome contributions! Here are some areas we'd love help with:
 

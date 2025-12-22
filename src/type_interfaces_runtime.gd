@@ -16,20 +16,41 @@ var interface_dir = (
 
 
 ## Validate a dictionary against an interface definition
+## [br][br]
+## [param context]: Optional context string (e.g., class name or file path) to include in error messages
 # gdLint: ignore=max-returns
-func validate(data: Dictionary, interface_def: Dictionary, strict: bool = false) -> bool:
+func validate(
+	data: Dictionary, interface_def: Dictionary, strict: bool = false, context: String = ""
+) -> bool:
 	if interface_def.is_empty():
 		if OS.is_debug_build():
 			push_warning("Interface definition is empty")
 		return false
 
 	var mode = ValidationMode.STRICT if strict else ValidationMode.LOOSE
+	var ctx_prefix = (" in %s" % context) if context else ""
+
+	# Get calling location from stack trace
+	var stack = get_stack()
+	var caller_info = ""
+	if stack.size() > 2:  # Skip validate() and its caller, get the actual source
+		var caller = stack[2]
+		var line_num = caller.get("line", 0)
+		var source_file = caller.get("source", "").get_file()
+		if source_file:
+			caller_info = "\n  Called from: %s:%d" % [source_file, line_num]
 
 	# Check all required fields exist
 	for field_name in interface_def.keys():
 		if not data.has(field_name):
 			if OS.is_debug_build():
-				push_error("Missing required field: %s" % field_name)
+				var data_snippet = _get_data_snippet(data, field_name)
+				push_error(
+					(
+						"Missing required field: %s%s%s\n  Data: %s"
+						% [field_name, ctx_prefix, caller_info, data_snippet]
+					)
+				)
 			return false
 
 		# Type check
@@ -38,10 +59,18 @@ func validate(data: Dictionary, interface_def: Dictionary, strict: bool = false)
 
 		if not _check_type(actual_value, expected_type):
 			if OS.is_debug_build():
+				var data_snippet = _get_data_snippet(data, field_name)
 				push_error(
 					(
-						"Type mismatch for field '%s': expected %s, got %s"
-						% [field_name, expected_type, _get_type_name(actual_value)]
+						"Type mismatch for field '%s': expected %s, got %s%s%s\n  Data: %s"
+						% [
+							field_name,
+							expected_type,
+							_get_type_name(actual_value),
+							ctx_prefix,
+							caller_info,
+							data_snippet
+						]
 					)
 				)
 			return false
@@ -51,7 +80,13 @@ func validate(data: Dictionary, interface_def: Dictionary, strict: bool = false)
 		for field_name in data.keys():
 			if not interface_def.has(field_name):
 				if OS.is_debug_build():
-					push_error("Unexpected field in strict mode: %s" % field_name)
+					var data_snippet = _get_data_snippet(data, field_name)
+					push_error(
+						(
+							"Unexpected field in strict mode: %s%s%s\n  Data: %s"
+							% [field_name, ctx_prefix, caller_info, data_snippet]
+						)
+					)
 				return false
 
 	return true
@@ -180,6 +215,58 @@ func _get_type_name(value: Variant) -> String:
 		_:
 			# gdlint: disable=max-returns
 			return "Unknown"
+
+
+## Get a snippet of data around a specific field for error messages
+func _get_data_snippet(data: Dictionary, focus_field: String) -> String:
+	var keys = data.keys()
+	var focus_idx = keys.find(focus_field)
+
+	if focus_idx == -1:
+		# Field doesn't exist, show first few fields
+		var snippet_keys = keys.slice(0, 3)
+		var parts: Array[String] = []
+		for key in snippet_keys:
+			parts.append('"%s": %s' % [key, _value_to_string(data[key])])
+		return "{%s, ...}" % ", ".join(parts)
+
+	# Show field before, the focus field, and field after
+	var start_idx = max(0, focus_idx - 1)
+	var end_idx = min(keys.size() - 1, focus_idx + 1)
+
+	var parts: Array[String] = []
+	if start_idx > 0:
+		parts.append("...")
+
+	for i in range(start_idx, end_idx + 1):
+		var key = keys[i]
+		var prefix = ">> " if key == focus_field else "   "
+		parts.append('%s"%s": %s' % [prefix, key, _value_to_string(data[key])])
+
+	if end_idx < keys.size() - 1:
+		parts.append("...")
+
+	return "{\n    %s\n  }" % "\n    ".join(parts)
+
+
+## Convert a value to a short string representation for error messages
+func _value_to_string(value) -> String:
+	if value == null:
+		return "null"
+	elif value is String:
+		var s = str(value)
+		if s.length() > 20:
+			return '"%s..."' % s.substr(0, 17)
+		return '"%s"' % s
+	elif value is Array:
+		return "[...%d items]" % value.size()
+	elif value is Dictionary:
+		return "{...%d keys}" % value.size()
+	else:
+		var s = str(value)
+		if s.length() > 20:
+			return "%s..." % s.substr(0, 17)
+		return s
 
 
 ## Check if types are compatible (e.g., int can be float)

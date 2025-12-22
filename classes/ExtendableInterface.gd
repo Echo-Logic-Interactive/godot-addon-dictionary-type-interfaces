@@ -42,7 +42,8 @@ func _init(
 
 	if schema and not schema.is_empty():
 		var is_strict = validation_mode == TypeInterfaces.ValidationMode.STRICT
-		if not TypeInterfaces.validate(initial_data, schema, is_strict):
+		var context = get_script().resource_path.get_file()
+		if not TypeInterfaces.validate(initial_data, schema, is_strict, context):
 			# Validation already logged the specific error, just return
 			return
 
@@ -231,7 +232,8 @@ func set_value(key: String, value) -> void:
 
 	if schema and not schema.is_empty():
 		var is_strict = _validation_mode == TypeInterfaces.ValidationMode.STRICT
-		var is_valid = TypeInterfaces.validate(_data, schema, is_strict)
+		var context = get_script().resource_path.get_file()
+		var is_valid = TypeInterfaces.validate(_data, schema, is_strict, context)
 
 		if not is_valid:
 			if OS.is_debug_build():
@@ -252,7 +254,8 @@ func update(data: Dictionary) -> void:
 	var schema = _get_schema()
 	if schema and not schema.is_empty():
 		var is_strict = _validation_mode == TypeInterfaces.ValidationMode.STRICT
-		var is_valid = TypeInterfaces.validate(_data, schema, is_strict)
+		var context = get_script().resource_path.get_file()
+		var is_valid = TypeInterfaces.validate(_data, schema, is_strict, context)
 
 		if not is_valid:
 			if OS.is_debug_build():
