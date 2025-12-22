@@ -23,9 +23,12 @@ var interface_dir = (
 func validate(
 	data: Dictionary, interface_def: Dictionary, strict: bool = false, context: String = ""
 ) -> bool:
+	# Skip validation entirely in release builds for zero overhead
+	if not OS.is_debug_build():
+		return true
+
 	if interface_def.is_empty():
-		if OS.is_debug_build():
-			push_warning("Interface definition is empty")
+		push_warning("Interface definition is empty")
 		return false
 
 	var mode = ValidationMode.STRICT if strict else ValidationMode.LOOSE
@@ -44,10 +47,9 @@ func validate(
 	# Check all required fields exist
 	for field_name in interface_def.keys():
 		if not data.has(field_name):
-			if OS.is_debug_build():
-				var data_snippet = _get_data_snippet(data, field_name)
-				push_error(
-					(
+			var data_snippet = _get_data_snippet(data, field_name)
+			push_error(
+				(
 						"Missing required field: %s%s%s\n  Data: %s"
 						% [field_name, ctx_prefix, caller_info, data_snippet]
 					)
@@ -59,35 +61,33 @@ func validate(
 		var actual_value = data[field_name]
 
 		if not _check_type(actual_value, expected_type):
-			if OS.is_debug_build():
-				var data_snippet = _get_data_snippet(data, field_name)
-				push_error(
-					(
-						"Type mismatch for field '%s': expected %s, got %s%s%s\n  Data: %s"
-						% [
-							field_name,
-							expected_type,
-							_get_type_name(actual_value),
-							ctx_prefix,
-							caller_info,
-							data_snippet
-						]
-					)
+			var data_snippet = _get_data_snippet(data, field_name)
+			push_error(
+				(
+					"Type mismatch for field '%s': expected %s, got %s%s%s\n  Data: %s"
+					% [
+						field_name,
+						expected_type,
+						_get_type_name(actual_value),
+						ctx_prefix,
+						caller_info,
+						data_snippet
+					]
 				)
+			)
 			return false
 
 	# In strict mode, check for extra fields
 	if mode == ValidationMode.STRICT:
 		for field_name in data.keys():
 			if not interface_def.has(field_name):
-				if OS.is_debug_build():
-					var data_snippet = _get_data_snippet(data, field_name)
-					push_error(
-						(
-							"Unexpected field in strict mode: %s%s%s\n  Data: %s"
-							% [field_name, ctx_prefix, caller_info, data_snippet]
-						)
+				var data_snippet = _get_data_snippet(data, field_name)
+				push_error(
+					(
+						"Unexpected field in strict mode: %s%s%s\n  Data: %s"
+						% [field_name, ctx_prefix, caller_info, data_snippet]
 					)
+				)
 				return false
 
 	return true

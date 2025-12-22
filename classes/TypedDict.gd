@@ -43,9 +43,8 @@ func set_value(key: String, value) -> void:
 	if schema and not schema.is_empty():
 		var context = get_script().resource_path.get_file()
 		if not TypeInterfaces.validate(_data, schema, false, context):
-			if OS.is_debug_build():
-				push_error("Invalid data after setting %s" % key)
-				_data.erase(key)  # Rollback change
+			# Validation failed, rollback
+			_data.erase(key)
 
 
 ## Update multiple fields at once
@@ -56,6 +55,5 @@ func update(data: Dictionary) -> void:
 	if schema and not schema.is_empty():
 		var context = get_script().resource_path.get_file()
 		if not TypeInterfaces.validate(_data, schema, false, context):
-			if OS.is_debug_build():
-				push_error("Invalid data after update")
-				_data = backup  # Rollback changes
+			# Validation failed, rollback
+			_data = backup

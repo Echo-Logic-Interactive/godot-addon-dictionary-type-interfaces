@@ -236,12 +236,9 @@ func set_value(key: String, value) -> void:
 		var is_valid = TypeInterfaces.validate(_data, schema, is_strict, context)
 
 		if not is_valid:
-			if OS.is_debug_build():
-				if _validation_mode == TypeInterfaces.ValidationMode.STRICT:
-					push_error("Invalid data after setting %s in STRICT mode" % key)
-					_data.erase(key)  # Rollback change
-				else:
-					push_warning("Validation warning after setting %s in LOOSE mode" % key)
+			# Validation failed, rollback in STRICT mode
+			if _validation_mode == TypeInterfaces.ValidationMode.STRICT:
+				_data.erase(key)
 
 
 ## Override update to respect validation mode
@@ -258,12 +255,9 @@ func update(data: Dictionary) -> void:
 		var is_valid = TypeInterfaces.validate(_data, schema, is_strict, context)
 
 		if not is_valid:
-			if OS.is_debug_build():
-				if _validation_mode == TypeInterfaces.ValidationMode.STRICT:
-					push_error("Invalid data after update in STRICT mode")
-					_data = backup  # Rollback changes
-				else:
-					push_warning("Validation warning after update in LOOSE mode")
+			# Validation failed, rollback in STRICT mode
+			if _validation_mode == TypeInterfaces.ValidationMode.STRICT:
+				_data = backup
 
 
 # ==============================================================================

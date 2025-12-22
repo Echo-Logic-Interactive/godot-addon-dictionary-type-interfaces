@@ -546,32 +546,60 @@ See [Examples](#-examples) section for reference implementations.
 
 ### Zero Cost in Production
 
-Validation uses `assert()` which **Godot automatically removes in release builds**:
+**All validation is completely skipped in release builds** using `OS.is_debug_build()` checks:
 
 ```gdscript
-# Development build:
+# Development/Debug build:
 var player = IPlayerData.new(data)
-# Internally runs: assert(TypeInterfaces.validate(data, schema))
-# ✅ Validates, catches errors during development
+# ✅ Full validation runs
+# ✅ Detailed error messages with file/line context
+# ✅ Data snippets showing exact problem
+# ✅ Automatic rollback on validation failure
 
 # Release build (exported game):
 var player = IPlayerData.new(data)
-# assert() is stripped out by Godot
-# ✅ No validation overhead - just direct dictionary assignment!
+# ✅ Validation completely skipped - returns immediately
+# ✅ Zero overhead - just direct dictionary operations
+# ✅ No error checking, no stack traces, no string formatting
 ```
 
-**Benchmarks:**
+**How It Works:**
 
-- **Development:** ~0.1ms validation overhead per instance creation
-- **Release:** 0ms overhead (assertions stripped)
-- **Memory:** Same as raw Dictionary + small class overhead
+The `validate()` function starts with:
+
+```gdscript
+func validate(...) -> bool:
+    # Skip validation entirely in release builds
+    if not OS.is_debug_build():
+        return true
+
+    # All validation logic here (only runs in debug)
+    # ...
+```
+
+**Performance Impact:**
+
+| Build Type  | Validation Overhead       | Error Messages | Rollback on Failure |
+| ----------- | ------------------------- | -------------- | ------------------- |
+| **Debug**   | ~0.1-0.5ms per validation | Full detail    | Yes                 |
+| **Release** | 0ms (instant return)      | None           | No\*                |
+
+\* In release builds, invalid data may be accepted since validation is skipped. **Always test with debug builds during development!**
+
+**Benchmarks (per instance creation):**
+
+- **Debug Build:** ~0.1ms validation + 0.05ms error formatting (if validation fails)
+- **Release Build:** 0ms - single boolean check, immediately returns `true`
+- **Memory:** Same as raw Dictionary in both builds
 - **Serialization:** Negligible - just returns internal dictionary
 
 **Best Practices:**
 
-- Use validation during development/testing
-- Ship with validation removed automatically
-- No need to disable the addon for release builds
+- ✅ Use validation during development/testing (debug builds)
+- ✅ Ship with validation automatically disabled (release builds)
+- ✅ Test thoroughly in debug mode to catch all data structure errors
+- ⚠️ Don't rely on validation in production - fix data at the source
+- ⚠️ Consider data sanitization for user-generated content even in release builds
 
 ---
 
