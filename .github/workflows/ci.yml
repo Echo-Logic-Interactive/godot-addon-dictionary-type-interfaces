@@ -246,29 +246,39 @@ jobs:
 
           [autoload]
 
-          TypeInterfaces="*res://src/type_interfaces_runtime.gd"
-          ModdingAPI="*res://src/interface_modding_api.gd"
+          TypeInterfaces="*res://addons/type_interfaces/src/type_interfaces_runtime.gd"
+          ModdingAPI="*res://addons/type_interfaces/src/interface_modding_api.gd"
 
-          [editor_plugins]
-
-          enabled=PackedStringArray("res://")
+          enabled=PackedStringArray("res://addons/type_interfaces/")
           PROJECTEOF
 
-      - name: Install addon
+      - name: Install addon in proper structure
         run: |
-          echo "Setting up addon in test project..."
-          # Addon is already in root directory structure
-          ls -la
+          echo "Setting up addon in Godot-expected structure..."
+
+          # Create addons directory structure
+          mkdir -p addons/type_interfaces
+
+          # Move all addon files into the addons/type_interfaces directory
+          shopt -s dotglob
+          for item in *; do
+            if [ "$item" != "addons" ] && [ "$item" != "Godot_v4.3-stable_linux.x86_64" ] && [ "$item" != "Godot_v4.3-stable_linux.x86_64.zip" ]; then
+              mv "$item" addons/type_interfaces/
+            fi
+          done
+
+          echo "Addon structure created:"
+          ls -la addons/type_interfaces/
           echo ""
-          echo "Project structure:"
-          find . -name "*.gd" -type f | head -20
+          echo "GDScript files:"
+          find addons -name "*.gd" -type f
 
       - name: Run editor validation test
         run: |
           echo "Running test_validation_in_editor.gd..."
 
-          # Run the editor script
-          ./Godot_v4.3-stable_linux.x86_64 --headless --script examples/test_validation_in_editor.gd --quit 2>&1 | tee test_output.txt
+          # Run the editor script from addon examples
+          ./Godot_v4.3-stable_linux.x86_64 --headless --script addons/type_interfaces/examples/test_validation_in_editor.gd --quit 2>&1 | tee test_output.txt
 
           # Check if test completed successfully
           if grep -q "EDITOR VALIDATION TEST COMPLETE" test_output.txt; then
