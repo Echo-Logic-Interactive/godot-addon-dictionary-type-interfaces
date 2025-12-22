@@ -244,6 +244,11 @@ jobs:
           config/name="Type Interfaces Test"
           config/features=PackedStringArray("4.3")
 
+          [autoload]
+
+          TypeInterfaces="*res://src/type_interfaces_runtime.gd"
+          ModdingAPI="*res://src/interface_modding_api.gd"
+
           [editor_plugins]
 
           enabled=PackedStringArray("res://")
@@ -252,7 +257,11 @@ jobs:
       - name: Install addon
         run: |
           echo "Setting up addon in test project..."
-          # Addon is already in root, just need project.godot
+          # Addon is already in root directory structure
+          ls -la
+          echo ""
+          echo "Project structure:"
+          find . -name "*.gd" -type f | head -20
 
       - name: Run editor validation test
         run: |
