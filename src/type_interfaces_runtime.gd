@@ -1,3 +1,4 @@
+@tool
 extends Node
 
 ## Runtime type interface validation and helpers
