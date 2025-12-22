@@ -829,3 +829,4 @@ No attribution required (but appreciated!).
 - **Discussions:** [GitHub Discussions](https://github.com/yourusername/type-interfaces/discussions)
 
 Made with ❤️ for the Godot community
+
