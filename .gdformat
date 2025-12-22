@@ -1,0 +1,52 @@
+# === Line Length & Wrapping ===
+line-length = 100
+
+# === Blank Lines ===
+# Blank lines before function definitions
+function-definition-blank-lines = 2
+function-definition-blank-lines-in-inner-class = 2
+
+# Add blank line before return statements
+blank-line-before-return = true
+
+# Maximum consecutive blank lines to keep
+keep-max-blank-lines-in-function = 2
+keep-max-blank-lines-in-class = 2
+
+# === Indentation ===
+# Use tabs (set to 'false' for spaces, which is GDScript standard)
+indent-with-tabs = false
+indent-size = 2
+
+# === Spacing ===
+# Space after commas in function calls/definitions
+space-after-comma = true
+
+# No space before function call parentheses: func_name() not func_name ()
+space-before-function-call-parenthesis = false
+
+# Space around operators: a + b not a+b
+space-around-arithmetic-operators = true
+space-around-comparison-operators = true
+space-around-assignment-operators = true
+space-around-bitwise-operators = true
+
+# === Comments ===
+# Preserve comment formatting
+format-comments = true
+
+# === String Formatting ===
+# Prefer double quotes for strings
+quote-style = double
+
+# === Function Definitions ===
+# Add trailing commas in multiline function definitions
+trailing-comma-in-function-definition = true
+
+# === Class Organization ===
+# Order class members (signals, consts, vars, funcs)
+sort-class-variables = true
+
+# === Control Flow ===
+# Ensure proper spacing in if/for/while statements
+space-before-control-flow-keyword = true
