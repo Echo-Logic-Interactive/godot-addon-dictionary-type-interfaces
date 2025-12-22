@@ -51,6 +51,8 @@ validation and mod extensibility.
 - [API Reference](#-api-reference)
 - [Modding Support](#-modding-support)
 - [Performance](#-performance)
+- [Examples](#-examples)
+- [Schema Exporter](#-schema-exporter)
 - [Contributing](#-contributing)
 
 ---
@@ -81,18 +83,15 @@ After installation, configure where your interface files are located:
 
 1. Go to **Project → Project Settings**
 2. Navigate to **Application → Type Interfaces → Interfaces Directory**
-3. Set the path to your interfaces folder (default: `res://scripts/interfaces/`)
+3. Set the path to your interfaces folder (default: `res://interfaces/`)
 
-This setting is used by **SchemaExporter** to find and document your interface files for modders.
+This setting is used by **SchemaExporter** (optional utility) to find and document your interface files for modders.
 
 **Alternative:** Set it programmatically:
 
 ```gdscript
 ProjectSettings.set_setting("application/type_interfaces/interfaces_directory", "res://your/path/")
 ```
-
-3. Enable the plugin in **Project Settings → Plugins → Type Interfaces**
-4. The `TypeInterfaces` singleton will be available automatically
 
 ---
 
@@ -488,8 +487,11 @@ Enable modding by using `ExtendableInterface` for player-facing data:
 # Use ExtendableInterface for moddable systems
 class_name IPlayerData extends ExtendableInterface
 # NOT: extends TypedDict
+```
 
-# Provide schema export for mod documentation
+**Optional:** Export schemas for mod documentation (see [Schema Exporter](#-schema-exporter)):
+
+```gdscript
 # In your game's debug menu or editor tool:
 SchemaExporter.export_all_schemas("res://mod_docs/schemas.json")
 SchemaExporter.export_typescript_definitions("res://mod_docs/schemas.d.ts")
@@ -528,7 +530,7 @@ player.extend_schema({"custom_data": "Dictionary"})
 player.extend_schema({"custom_stats": "ICustomStats"})
 ```
 
-See [Example Game Interfaces](?tab=readme-ov-file#examples) for reference implementations.
+See [Examples](#-examples) section for reference implementations.
 
 ---
 
@@ -562,6 +564,127 @@ var player = IPlayerData.new(data)
 - Use validation during development/testing
 - Ship with validation removed automatically
 - No need to disable the addon for release builds
+
+---
+
+## 💡 Examples
+
+### Included Example Interfaces
+
+The addon includes reference implementations demonstrating best practices:
+
+**Location:** `res://addons/type_interfaces/examples/`
+
+#### IExamplePlayer.gd
+
+Basic player data with common fields - demonstrates:
+
+- Property accessors for autocomplete
+- Nullable types
+- Extendable schema
+- LOOSE validation mode
+
+#### IExampleItem.gd
+
+Inventory/item system - demonstrates:
+
+- Unique identifiers
+- Array types
+- Optional fields
+- Metadata patterns
+
+#### IExampleQuest.gd
+
+Quest/mission tracking - demonstrates:
+
+- Complex nested data
+- Array of custom types
+- Status tracking
+- Reward systems
+
+### Usage
+
+Copy these examples to your project's interfaces directory and customize:
+
+```bash
+# Copy examples to your project
+cp -r addons/type_interfaces/examples/* interfaces/
+
+# Or reference them directly
+extends IExamplePlayer
+```
+
+### Creating Your Own
+
+```gdscript
+# 1. Create your interface file in your interfaces directory
+# res://interfaces/IMyData.gd
+class_name IMyData
+extends ExtendableInterface
+
+var my_field: String:
+    get: return get_value("my_field", "")
+    set(value): set_value("my_field", value)
+
+func _get_base_schema() -> Dictionary:
+    return {
+        "my_field": "String",
+        "my_number": "int"
+    }
+
+# 2. Use it in your game
+var data = IMyData.new({
+    "my_field": "Hello",
+    "my_number": 42
+})
+```
+
+---
+
+## 📤 Schema Exporter
+
+**Optional utility** for documenting interfaces for modders. Not needed for basic usage.
+
+### Setup
+
+Configure your interfaces directory (if not using default `res://interfaces/`):
+
+```gdscript
+# In Project Settings → Application → Type Interfaces → Interfaces Directory
+# Or programmatically:
+ProjectSettings.set_setting("application/type_interfaces/interfaces_directory", "res://my/interfaces/")
+```
+
+### Usage
+
+```gdscript
+# Export all interface schemas to JSON
+SchemaExporter.export_all_schemas("res://mod_docs/schemas.json")
+
+# Export TypeScript definitions for web tools
+SchemaExporter.export_typescript_definitions("res://mod_docs/interfaces.d.ts")
+
+# Get schema info programmatically
+var schema = SchemaExporter.get_schema_info("IPlayerData")
+print(schema.base_schema)  # See base fields
+print(schema.fields)  # Detailed type info
+
+# Custom directory per call
+SchemaExporter.export_all_schemas("res://docs/schemas.json", "res://custom/interfaces/")
+```
+
+### When to Use
+
+- **Building mod support** - Export schemas for modders to reference
+- **Documentation generation** - Create API docs from interfaces
+- **Web-based mod tools** - Generate TypeScript definitions
+- **Schema validation** - Inspect interface structure programmatically
+
+**Not needed for:**
+
+- Normal game development
+- Runtime validation (handled automatically)
+- Simple projects without modding
 
 ---
 

@@ -32,7 +32,7 @@ extends RefCounted
 ## @tutorial(Modding Guide): res://docs/MODDING_API.md
 
 ## Default interfaces directory - can be overridden via project settings or method parameters
-const DEFAULT_INTERFACES_DIR := "res://scripts/interfaces/"
+const DEFAULT_INTERFACES_DIR := "res://interfaces/"
 
 
 ## Get the configured interfaces directory
