@@ -1,15 +1,24 @@
 class_name ValidationTestsBase
 extends RefCounted
 
-var IExamplePlayer = preload("./IExamplePlayer.gd")
-var IExampleItem = preload("./IExampleItem.gd")
-var IExampleQuest = preload("./IExampleQuest.gd")
-
-var type_interfaces = preload("../src/type_interfaces_runtime.gd").new()
-var validation_mode = type_interfaces.ValidationMode
-
 ## Shared test logic for both editor and CI validation
 ## This base class contains all test implementations to avoid duplication
+
+# Load interface scripts at runtime to avoid CI path resolution issues
+var IExamplePlayer = null
+var IExampleItem = null
+var IExampleQuest = null
+var TypeInterfaces = null
+var validation_mode = null
+
+
+func _init() -> void:
+	# Load dependencies at runtime
+	IExamplePlayer = preload("./IExamplePlayer.gd")
+	IExampleItem = preload("./IExampleItem.gd")
+	IExampleQuest = preload("./IExampleQuest.gd")
+	TypeInterfaces = preload("../src/type_interfaces_runtime.gd").new()
+	validation_mode = TypeInterfaces.ValidationMode
 
 
 func run_all_tests() -> void:
