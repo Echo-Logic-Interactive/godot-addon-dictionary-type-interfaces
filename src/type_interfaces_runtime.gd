@@ -32,7 +32,7 @@ func validate(
 		push_warning("Interface definition is empty")
 		return false
 
-	var mode = ValidationMode.STRICT if strict else ValidationMode.LOOSE
+	var mode := ValidationMode.STRICT if strict else ValidationMode.LOOSE
 	var ctx_prefix = (" in %s" % context) if context else ""
 
 	# Get calling location from stack trace

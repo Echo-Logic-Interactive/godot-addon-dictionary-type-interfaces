@@ -5,6 +5,12 @@ var IExamplePlayer = load(get_script().resource_path.get_base_dir() + "/IExample
 var IExampleItem = load(get_script().resource_path.get_base_dir() + "/IExampleItem.gd")
 var IExampleQuest = load(get_script().resource_path.get_base_dir() + "/IExampleQuest.gd")
 
+## We load the runtime validator despite it being a global singleton due to github ci needing
+## it in the testing environment.
+# gdlint: disable=class-variable-name
+var TypeInterfaces = preload("../src/type_interfaces_runtime.gd").new()
+var ValidationMode = TypeInterfaces.ValidationMode
+
 ## EditorScript to test Type Interfaces validation in the editor
 ##
 ## HOW TO USE:
@@ -20,6 +26,7 @@ var IExampleQuest = load(get_script().resource_path.get_base_dir() + "/IExampleQ
 
 
 func _run() -> void:
+	print("Loaded TypeInterfaces singleton: %s" % TypeInterfaces)
 	print("\n" + "=".repeat(70))
 	print("TYPE INTERFACES - EDITOR VALIDATION TEST")
 	print("=".repeat(70))
@@ -157,7 +164,7 @@ func test_strict_vs_loose_mode() -> void:
 			"custom_field": "Extra data is OK",  # Extra field allowed
 			"another_field": 42
 		},
-		TypeInterfaces.ValidationMode.LOOSE
+		ValidationMode.LOOSE
 	)
 
 	print("✓ LOOSE mode: Created player with extra fields")
@@ -176,7 +183,7 @@ func test_strict_vs_loose_mode() -> void:
 				"position": Vector2.ZERO
 				# No extra fields!
 			},
-			TypeInterfaces.ValidationMode.STRICT
+			ValidationMode.STRICT
 		)
 	)
 
