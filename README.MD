@@ -1,4 +1,4 @@
-# Type Interfaces for Godot 4.x
+# Dictionary Type Interfaces for Godot 4.x
 
 > **Runtime type validation and structured data objects for GDScript with full modding support**
 
@@ -829,3 +829,4 @@ No attribution required (but appreciated!).
 - **Discussions:** [GitHub Discussions](https://github.com/yourusername/type-interfaces/discussions)
 
 Made with ❤️ for the Godot community
+
