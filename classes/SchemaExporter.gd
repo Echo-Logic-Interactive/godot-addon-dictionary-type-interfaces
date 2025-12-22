@@ -40,10 +40,17 @@ const DEFAULT_INTERFACES_DIR := "res://interfaces/"
 ## [br]
 ## Checks project settings first, falls back to default
 static func get_interfaces_directory() -> String:
-	var project_setting = "application/type_interfaces/interfaces_directory"
+	var setting_value := DEFAULT_INTERFACES_DIR
+	var project_setting := "application/type_interfaces/interfaces_directory"
+
 	if ProjectSettings.has_setting(project_setting):
-		return ProjectSettings.get_setting(project_setting)
-	return DEFAULT_INTERFACES_DIR
+		setting_value = ProjectSettings.get_setting(project_setting)
+
+	# Ensure it ends with a slash
+	if not setting_value.ends_with("/"):
+		setting_value += "/"
+
+	return setting_value
 
 
 ## Export all registered interface schemas to a JSON file
