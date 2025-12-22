@@ -1,8 +1,8 @@
 extends Node
 
-var IExamplePlayer = load(get_script().resource_path.base_dir() + "/IExamplePlayer.gd")
-var IExampleItem = load(get_script().resource_path.base_dir() + "/IExampleItem.gd")
-var IExampleQuest = load(get_script().resource_path.base_dir() + "/IExampleQuest.gd")
+var IExamplePlayer = preload("./IExamplePlayer.gd")
+var IExampleItem = preload("./IExampleItem.gd")
+var IExampleQuest = preload("./IExampleQuest.gd")
 
 ## Basic Usage Examples for Type Interfaces Addon
 ##
