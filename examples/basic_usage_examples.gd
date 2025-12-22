@@ -1,8 +1,8 @@
 extends Node
 
-const IExamplePlayer = preload("res://addons/type_interfaces/examples/IExamplePlayer.gd")
-const IExampleItem = preload("res://addons/type_interfaces/examples/IExampleItem.gd")
-const IExampleQuest = preload("res://addons/type_interfaces/examples/IExampleQuest.gd")
+var IExamplePlayer = load(get_script().resource_path.base_dir() + "/IExamplePlayer.gd")
+var IExampleItem = load(get_script().resource_path.base_dir() + "/IExampleItem.gd")
+var IExampleQuest = load(get_script().resource_path.base_dir() + "/IExampleQuest.gd")
 
 ## Basic Usage Examples for Type Interfaces Addon
 ##

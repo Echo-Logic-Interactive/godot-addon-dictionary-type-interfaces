@@ -1,9 +1,9 @@
 @tool
 extends EditorScript
 
-const IExamplePlayer = preload("./IExamplePlayer.gd")
-const IExampleItem = preload("./IExampleItem.gd")
-const IExampleQuest = preload("./IExampleQuest.gd")
+var IExamplePlayer = load(get_script().resource_path.base_dir() + "/IExamplePlayer.gd")
+var IExampleItem = load(get_script().resource_path.base_dir() + "/IExampleItem.gd")
+var IExampleQuest = load(get_script().resource_path.base_dir() + "/IExampleQuest.gd")
 
 ## EditorScript to test Type Interfaces validation in the editor
 ##
