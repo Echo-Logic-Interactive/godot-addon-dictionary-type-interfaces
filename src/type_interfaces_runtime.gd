@@ -9,6 +9,11 @@ enum ValidationMode {
 	LOOSE,  # Dictionary can have extra fields
 }
 
+## Get the interfaces directory from project settings
+var interface_dir = (
+	preload("res://addons/type_interfaces/classes/SchemaExporter.gd").get_interfaces_directory()
+)
+
 
 ## Validate a dictionary against an interface definition
 # gdLint: ignore=max-returns
@@ -197,7 +202,7 @@ func _is_interface_type(type_string: String) -> bool:
 		return false
 
 	# Verify the interface file exists
-	var script_path = "res://scripts/interfaces/%s.gd" % type_string
+	var script_path = interface_dir + "%s.gd" % type_string
 	return FileAccess.file_exists(script_path)
 
 
