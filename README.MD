@@ -53,6 +53,7 @@ validation and mod extensibility.
 - [Performance](#-performance)
 - [Examples](#-examples)
 - [Schema Exporter](#-schema-exporter)
+- [Testing & Validation](#-testing--validation)
 - [Contributing](#-contributing)
 
 ---

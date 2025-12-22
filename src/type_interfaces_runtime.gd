@@ -17,7 +17,8 @@ var interface_dir = (
 
 ## Validate a dictionary against an interface definition
 ## [br][br]
-## [param context]: Optional context string (e.g., class name or file path) to include in error messages
+## [param context]: Optional context string (e.g., class name or file path) to include in
+## error messages
 # gdLint: ignore=max-returns
 func validate(
 	data: Dictionary, interface_def: Dictionary, strict: bool = false, context: String = ""
@@ -253,20 +254,23 @@ func _get_data_snippet(data: Dictionary, focus_field: String) -> String:
 func _value_to_string(value) -> String:
 	if value == null:
 		return "null"
-	elif value is String:
+
+	if value is String:
 		var s = str(value)
 		if s.length() > 20:
 			return '"%s..."' % s.substr(0, 17)
 		return '"%s"' % s
-	elif value is Array:
+
+	if value is Array:
 		return "[...%d items]" % value.size()
-	elif value is Dictionary:
+
+	if value is Dictionary:
 		return "{...%d keys}" % value.size()
-	else:
-		var s = str(value)
-		if s.length() > 20:
-			return "%s..." % s.substr(0, 17)
-		return s
+
+	var s = str(value)
+	if s.length() > 20:
+		return "%s..." % s.substr(0, 17)
+	return s
 
 
 ## Check if types are compatible (e.g., int can be float)
