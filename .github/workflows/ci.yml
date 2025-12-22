@@ -48,8 +48,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-          cache: 'pip'
+          python-version: "3.11"
+          cache: "pip"
 
       - name: Install gdtoolkit
         run: pip install gdtoolkit
@@ -73,8 +73,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-          cache: 'pip'
+          python-version: "3.11"
+          cache: "pip"
 
       - name: Install gdtoolkit
         run: pip install gdtoolkit
@@ -234,20 +234,20 @@ jobs:
 
           # Create a minimal project.godot for the addon
           mkdir -p .godot
-          cat > project.godot << 'EOF'
-; Engine configuration file.
+          cat > project.godot <<'PROJECTEOF'
+          ; Engine configuration file.
 
-config_version=5
+          config_version=5
 
-[application]
+          [application]
 
-config/name="Type Interfaces Test"
-config/features=PackedStringArray("4.3")
+          config/name="Type Interfaces Test"
+          config/features=PackedStringArray("4.3")
 
-[editor_plugins]
+          [editor_plugins]
 
-enabled=PackedStringArray("res://")
-EOF
+          enabled=PackedStringArray("res://")
+          PROJECTEOF
 
       - name: Install addon
         run: |
@@ -367,7 +367,15 @@ EOF
   summary:
     name: CI Summary
     runs-on: ubuntu-latest
-    needs: [gdscript-lint, gdscript-format, addon-structure, documentation, godot-validation, code-quality]
+    needs:
+      [
+        gdscript-lint,
+        gdscript-format,
+        addon-structure,
+        documentation,
+        godot-validation,
+        code-quality,
+      ]
     if: always()
 
     steps:
