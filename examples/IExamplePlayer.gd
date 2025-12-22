@@ -39,7 +39,7 @@ var max_health: float:
 	set(value):
 		set_value("max_health", value)
 
-var position: Vector2:
+var position: Variant:
 	get:
 		return get_value("position", Vector2.ZERO)
 	set(value):

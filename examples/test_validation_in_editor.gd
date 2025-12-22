@@ -153,6 +153,7 @@ func test_strict_vs_loose_mode() -> void:
 			"experience": 0,
 			"health": 100.0,
 			"max_health": 100.0,
+			"position": Vector2.ZERO,
 			"custom_field": "Extra data is OK",  # Extra field allowed
 			"another_field": 42
 		},
@@ -171,7 +172,8 @@ func test_strict_vs_loose_mode() -> void:
 				"level": 1,
 				"experience": 0,
 				"health": 100.0,
-				"max_health": 100.0
+				"max_health": 100.0,
+				"position": Vector2.ZERO
 				# No extra fields!
 			},
 			TypeInterfaces.ValidationMode.STRICT
@@ -204,7 +206,7 @@ func test_valid_item() -> void:
 	print("✓ Created item: %s (x%d)" % [sword.item_name, sword.quantity])
 	print("  ID: %s" % sword.id)
 	print("  Weight: %.1f kg" % sword.weight)
-	print("  Tags: %s" % sword.tags)
+	print("  Tags: %s" % [sword.tags])
 
 
 # ==============================================================================
@@ -266,7 +268,8 @@ func test_nested_interfaces() -> void:
 					"progress": {"current": 5, "required": 5}
 				}
 			],
-			"required_level": 1
+			"required_level": 1,
+			"rewards": {"gold": 100, "experience": 50}
 		}
 	)
 

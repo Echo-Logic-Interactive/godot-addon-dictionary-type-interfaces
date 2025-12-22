@@ -35,6 +35,12 @@ var objectives: Array:
 	set(value):
 		set_value("objectives", value)
 
+var required_level: int:
+	get:
+		return get_value("required_level", 1)
+	set(value):
+		set_value("required_level", value)
+
 
 func _get_base_schema() -> Dictionary:
 	return {

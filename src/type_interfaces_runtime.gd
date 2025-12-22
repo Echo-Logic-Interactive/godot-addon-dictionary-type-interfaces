@@ -48,7 +48,7 @@ func validate(data: Dictionary, interface_def: Dictionary, strict: bool = false)
 		for field_name in data.keys():
 			if not interface_def.has(field_name):
 				push_error("Unexpected field in strict mode: %s" % field_name)
-			return false
+				return false
 
 	return true
 
