@@ -1,9 +1,9 @@
 class_name ValidationTestsBase
 extends RefCounted
 
-var IExamplePlayer = preload("./IExamplePlayer.gd")
-var IExampleItem = preload("./IExampleItem.gd")
-var IExampleQuest = preload("./IExampleQuest.gd")
+var IExamplePlayer = preload("IExamplePlayer.gd")
+var IExampleItem = preload("IExampleItem.gd")
+var IExampleQuest = preload("IExampleQuest.gd")
 
 var type_interfaces = preload("../src/type_interfaces_runtime.gd").new()
 var validation_mode = type_interfaces.ValidationMode
