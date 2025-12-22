@@ -12,7 +12,9 @@ var _data: Dictionary = {}
 func _init(initial_data: Dictionary = {}) -> void:
 	var schema = _get_schema()
 	if schema and not schema.is_empty():
-		assert(TypeInterfaces.validate(initial_data, schema), "Invalid data for " + get_class())
+		if not TypeInterfaces.validate(initial_data, schema):
+			# Validation already logged the specific error
+			return
 	_data = initial_data.duplicate()
 
 
@@ -38,12 +40,19 @@ func set_value(key: String, value) -> void:
 	_data[key] = value
 	var schema = _get_schema()
 	if schema and not schema.is_empty():
-		assert(TypeInterfaces.validate(_data, schema), "Invalid data after setting " + key)
+		if not TypeInterfaces.validate(_data, schema):
+			if OS.is_debug_build():
+				push_error("Invalid data after setting %s" % key)
+				_data.erase(key)  # Rollback change
 
 
 ## Update multiple fields at once
 func update(data: Dictionary) -> void:
+	var backup = _data.duplicate()
 	_data.merge(data, true)
 	var schema = _get_schema()
 	if schema and not schema.is_empty():
-		assert(TypeInterfaces.validate(_data, schema), "Invalid data after update")
+		if not TypeInterfaces.validate(_data, schema):
+			if OS.is_debug_build():
+				push_error("Invalid data after update")
+				_data = backup  # Rollback changes

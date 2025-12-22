@@ -19,7 +19,8 @@ var interface_dir = (
 # gdLint: ignore=max-returns
 func validate(data: Dictionary, interface_def: Dictionary, strict: bool = false) -> bool:
 	if interface_def.is_empty():
-		push_warning("Interface definition is empty")
+		if OS.is_debug_build():
+			push_warning("Interface definition is empty")
 		return false
 
 	var mode = ValidationMode.STRICT if strict else ValidationMode.LOOSE
@@ -27,7 +28,8 @@ func validate(data: Dictionary, interface_def: Dictionary, strict: bool = false)
 	# Check all required fields exist
 	for field_name in interface_def.keys():
 		if not data.has(field_name):
-			push_error("Missing required field: %s" % field_name)
+			if OS.is_debug_build():
+				push_error("Missing required field: %s" % field_name)
 			return false
 
 		# Type check
@@ -35,19 +37,21 @@ func validate(data: Dictionary, interface_def: Dictionary, strict: bool = false)
 		var actual_value = data[field_name]
 
 		if not _check_type(actual_value, expected_type):
-			push_error(
-				(
-					"Type mismatch for field '%s': expected %s, got %s"
-					% [field_name, expected_type, _get_type_name(actual_value)]
+			if OS.is_debug_build():
+				push_error(
+					(
+						"Type mismatch for field '%s': expected %s, got %s"
+						% [field_name, expected_type, _get_type_name(actual_value)]
+					)
 				)
-			)
 			return false
 
 	# In strict mode, check for extra fields
 	if mode == ValidationMode.STRICT:
 		for field_name in data.keys():
 			if not interface_def.has(field_name):
-				push_error("Unexpected field in strict mode: %s" % field_name)
+				if OS.is_debug_build():
+					push_error("Unexpected field in strict mode: %s" % field_name)
 				return false
 
 	return true

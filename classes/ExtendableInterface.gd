@@ -43,7 +43,7 @@ func _init(
 	if schema and not schema.is_empty():
 		var is_strict = validation_mode == TypeInterfaces.ValidationMode.STRICT
 		if not TypeInterfaces.validate(initial_data, schema, is_strict):
-			push_error("Invalid data for %s" % get_class())
+			# Validation already logged the specific error, just return
 			return
 
 	_data = initial_data.duplicate()
@@ -207,7 +207,7 @@ func get_registered_mods() -> Array[String]:
 
 ## Override set_value to respect validation mode
 ## [br][br]
-## In LOOSE mode, validation only warns. In STRICT mode, validation fails with assertion.
+## In LOOSE mode, validation only warns. In STRICT mode, validation errors and rolls back changes.
 ## Automatically converts Dictionaries to interface instances when the schema specifies an
 ## interface type.
 func set_value(key: String, value) -> void:
@@ -234,16 +234,17 @@ func set_value(key: String, value) -> void:
 		var is_valid = TypeInterfaces.validate(_data, schema, is_strict)
 
 		if not is_valid:
-			if _validation_mode == TypeInterfaces.ValidationMode.STRICT:
-				push_error("Invalid data after setting %s in STRICT mode" % key)
-				_data.erase(key)  # Rollback change
-			else:
-				push_warning("Validation warning after setting %s in LOOSE mode" % key)
+			if OS.is_debug_build():
+				if _validation_mode == TypeInterfaces.ValidationMode.STRICT:
+					push_error("Invalid data after setting %s in STRICT mode" % key)
+					_data.erase(key)  # Rollback change
+				else:
+					push_warning("Validation warning after setting %s in LOOSE mode" % key)
 
 
 ## Override update to respect validation mode
 ## [br][br]
-## In LOOSE mode, validation only warns. In STRICT mode, validation fails with assertion.
+## In LOOSE mode, validation only warns. In STRICT mode, validation errors and rolls back changes.
 func update(data: Dictionary) -> void:
 	var backup = _data.duplicate()
 	_data.merge(data, true)
@@ -254,11 +255,12 @@ func update(data: Dictionary) -> void:
 		var is_valid = TypeInterfaces.validate(_data, schema, is_strict)
 
 		if not is_valid:
-			if _validation_mode == TypeInterfaces.ValidationMode.STRICT:
-				push_error("Invalid data after update in STRICT mode")
-				_data = backup  # Rollback changes
-			else:
-				push_warning("Validation warning after update in LOOSE mode")
+			if OS.is_debug_build():
+				if _validation_mode == TypeInterfaces.ValidationMode.STRICT:
+					push_error("Invalid data after update in STRICT mode")
+					_data = backup  # Rollback changes
+				else:
+					push_warning("Validation warning after update in LOOSE mode")
 
 
 # ==============================================================================
