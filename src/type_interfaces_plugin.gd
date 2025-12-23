@@ -49,7 +49,7 @@ func _on_export_schemas() -> void:
 ## Register project settings for the addon
 func _register_project_settings() -> void:
 	var setting_name = "application/type_interfaces/interfaces_directory"
-	var default_value = "res://interfaces/"
+	var default_value = "res://scripts/interfaces/"
 
 	if not ProjectSettings.has_setting(setting_name):
 		ProjectSettings.set_setting(setting_name, default_value)

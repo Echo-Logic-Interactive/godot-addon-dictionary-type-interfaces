@@ -378,8 +378,9 @@ static func _create_interface_instance(interface_name: String, interfaces_dir: S
 		push_error("[SchemaExporter] Failed to load interface script: %s" % script_path)
 		return null
 
-	# Create an instance of the loaded script
-	var instance = script.new()
+	# Create an instance of the loaded script with empty data and LOOSE validation
+	# This prevents validation errors during schema extraction
+	var instance = script.new({}, TypeInterfaces.ValidationMode.LOOSE)
 
 	# Verify it's a valid interface (has schema methods)
 	if not instance.has_method("_get_schema") and not instance.has_method("_get_base_schema"):
