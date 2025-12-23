@@ -17,11 +17,33 @@ func _enter_tree() -> void:
 	# Register ModdingAPI singleton for mod support
 	add_autoload_singleton("ModdingAPI", "interface_modding_api.gd")
 
+	# Add menu item for schema export
+	add_tool_menu_item("Export Schemas to Viewer", _on_export_schemas)
+
 
 func _exit_tree() -> void:
 	print("Dictionary Type Interfaces plugin deactivated")
 	remove_autoload_singleton("TypeInterfaces")
 	remove_autoload_singleton("ModdingAPI")
+	remove_tool_menu_item("Export Schemas to Viewer")
+
+
+## Export all schemas to the viewer directory
+func _on_export_schemas() -> void:
+	var SchemaExporter = load("res://addons/type_interfaces/classes/SchemaExporter.gd")
+	var success = SchemaExporter.export_all_to_viewer()
+
+	if success:
+		print("✓ Schemas exported to schema_viewer/schemas/")
+		print("Open: addons/type_interfaces/schema_viewer/app/index.html")
+
+		# Optional: Auto-open the viewer in default browser
+		var viewer_path = ProjectSettings.globalize_path(
+			"res://addons/type_interfaces/schema_viewer/app/index.html"
+		)
+		OS.shell_open(viewer_path)
+	else:
+		push_error("Failed to export schemas. Check the console for errors.")
 
 
 ## Register project settings for the addon

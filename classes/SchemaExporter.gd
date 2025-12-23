@@ -3,14 +3,14 @@ class_name SchemaExporter
 
 extends RefCounted
 
+# Directory for schema viewer JSON files
+const VIEWER_SCHEMAS_DIR = "res://addons/type_interfaces/schema_viewer/schemas/"
+
 # Load the utility class once at compile time - uses relative path to work in CI
 static var GetInterfacesDir = load("../src/utils/get_interfaces_dir.gd")
 
 # Call it to get the default directory
 static var default_interface_dir: String = GetInterfacesDir.get_interfaces_directory()
-
-# Directory for schema viewer JSON files
-const VIEWER_SCHEMAS_DIR = "res://addons/type_interfaces/schema_viewer/schemas/"
 
 ## Utility for exporting interface schemas to JSON for mod documentation
 ##
@@ -79,8 +79,8 @@ static func export_all_to_viewer(interfaces_dir: String = "", include_classes: b
 	var regular_classes: Array[String] = []
 	if include_classes:
 		regular_classes = get_available_classes()
-		for class_name in regular_classes:
-			if not export_class_to_viewer(class_name):
+		for class_name_str in regular_classes:
+			if not export_class_to_viewer(class_name_str):
 				success = false
 			else:
 				total_count += 1
@@ -96,6 +96,10 @@ static func export_all_to_viewer(interfaces_dir: String = "", include_classes: b
 
 	var index_path = VIEWER_SCHEMAS_DIR + "_index.json"
 	if not _write_json_to_file(index_path, index):
+		success = false
+
+	# Generate a single JavaScript file with all schemas embedded (for file:// protocol)
+	if not _generate_schemas_js_file(interface_classes, regular_classes, dir):
 		success = false
 
 	print(
@@ -186,22 +190,22 @@ static func export_schema(
 ## [param class_name]: Name of the class (e.g., "Player")[br]
 ## [br]
 ## Returns true if export succeeds, false otherwise
-static func export_class_to_viewer(class_name: String) -> bool:
-	var class_info = get_class_info(class_name)
+static func export_class_to_viewer(class_name_str: String) -> bool:
+	var class_info = get_class_info(class_name_str)
 
 	if not class_info or class_info.is_empty():
-		push_error("[SchemaExporter] Failed to get class info for %s" % class_name)
+		push_error("[SchemaExporter] Failed to get class info for %s" % class_name_str)
 		return false
 
 	var schema_doc = {
 		"version": "1.0.0",
 		"generated": Time.get_datetime_string_from_system(),
 		"type": "class",
-		"class": class_name,
+		"class": class_name_str,
 		"schema": class_info
 	}
 
-	var output_path = VIEWER_SCHEMAS_DIR + class_name + ".json"
+	var output_path = VIEWER_SCHEMAS_DIR + class_name_str + ".json"
 	return _write_json_to_file(output_path, schema_doc)
 
 
@@ -209,17 +213,17 @@ static func export_class_to_viewer(class_name: String) -> bool:
 ## [br][br]
 ## Parses the GDScript file to extract variables, exports, and type information
 ## [br][br]
-## [param class_name]: Name of the class
+## [param class_name_str]: Name of the class
 ## [br]
 ## Returns a Dictionary containing class info, or empty if not found
-static func get_class_info(class_name: String) -> Dictionary:
+static func get_class_info(class_name_str: String) -> Dictionary:
 	# Find the script file for this class
-	var script_path = _find_class_script(class_name)
+	var script_path = _find_class_script(class_name_str)
 	if script_path.is_empty():
 		return {}
 
 	# Parse the script file
-	return _parse_class_file(script_path, class_name)
+	return _parse_class_file(script_path, class_name_str)
 
 
 ## Get comprehensive schema information for an interface
@@ -611,17 +615,17 @@ static func get_available_classes() -> Array[String]:
 	var class_list = config.get_value("", "list", [])
 	for class_entry in class_list:
 		if class_entry is Dictionary and class_entry.has("class"):
-			var class_name = class_entry["class"]
+			var class_name_str = class_entry["class"]
 			# Include all classes except interfaces (starting with I)
-			if not class_name.begins_with("I"):
-				classes.append(class_name)
+			if not class_name_str.begins_with("I"):
+				classes.append(class_name_str)
 
 	classes.sort()
 	return classes
 
 
 ## Find the script file path for a class name
-static func _find_class_script(class_name: String) -> String:
+static func _find_class_script(class_name_str: String) -> String:
 	var cache_file = ".godot/global_script_class_cache.cfg"
 
 	if not FileAccess.file_exists(cache_file):
@@ -636,14 +640,14 @@ static func _find_class_script(class_name: String) -> String:
 
 	var class_list = config.get_value("", "list", [])
 	for class_entry in class_list:
-		if class_entry is Dictionary and class_entry.get("class") == class_name:
+		if class_entry is Dictionary and class_entry.get("class") == class_name_str:
 			return class_entry.get("path", "")
 
 	return ""
 
 
 ## Parse a GDScript class file to extract variable information
-static func _parse_class_file(script_path: String, class_name: String) -> Dictionary:
+static func _parse_class_file(script_path: String, class_name_str: String) -> Dictionary:
 	if not FileAccess.file_exists(script_path):
 		push_warning("[SchemaExporter] File not found: %s" % script_path)
 		return {}
@@ -657,7 +661,7 @@ static func _parse_class_file(script_path: String, class_name: String) -> Dictio
 	file.close()
 
 	var result = {
-		"class_name": class_name,
+		"class_name": class_name_str,
 		"script_path": script_path,
 		"extends": "",
 		"description": "",
@@ -739,6 +743,57 @@ static func _parse_class_file(script_path: String, class_name: String) -> Dictio
 		i += 1
 
 	return result
+
+
+## Generate a JavaScript file with all schemas embedded
+## This allows the viewer to work with file:// protocol without CORS issues
+static func _generate_schemas_js_file(
+	interface_classes: Array[String], regular_classes: Array[String], interfaces_dir: String
+) -> bool:
+	var js_content = "// Auto-generated schemas for viewer\n"
+	js_content += "// Generated: %s\n\n" % Time.get_datetime_string_from_system()
+	js_content += "window.SCHEMAS_DATA = {\n"
+	js_content += '  "version": "1.0.0",\n'
+	js_content += '  "generated": "%s",\n' % Time.get_datetime_string_from_system()
+	js_content += '  "schemas": [\n'
+
+	var schema_entries: Array[String] = []
+
+	# Add interfaces
+	for interface_name in interface_classes:
+		var schema_info = get_schema_info(interface_name, interfaces_dir)
+		if schema_info:
+			var schema_doc = {
+				"name": interface_name,
+				"type": "interface",
+				"data":
+				{
+					"version": "1.0.0",
+					"type": "interface",
+					"interface": interface_name,
+					"schema": schema_info
+				}
+			}
+			schema_entries.append("    " + JSON.stringify(schema_doc))
+
+	# Add classes
+	for class_name_str in regular_classes:
+		var class_info = get_class_info(class_name_str)
+		if class_info and not class_info.is_empty():
+			var schema_doc = {
+				"name": class_name_str,
+				"type": "class",
+				"data":
+				{"version": "1.0.0", "type": "class", "class": class_name_str, "schema": class_info}
+			}
+			schema_entries.append("    " + JSON.stringify(schema_doc))
+
+	js_content += ",\n".join(schema_entries)
+	js_content += "\n  ]\n"
+	js_content += "};\n"
+
+	var output_path = "res://addons/type_interfaces/schema_viewer/app/schemas.js"
+	return _write_text_to_file(output_path, js_content)
 
 
 ## Extract variable information from a var declaration line

@@ -39,62 +39,30 @@ class SchemaViewer {
     listElement.innerHTML = '<div class="loading">Loading schemas...</div>';
 
     try {
-      // Load the index file
-      const indexResponse = await fetch("../schemas/_index.json");
-      if (!indexResponse.ok) {
+      // Check if schemas data is available from the embedded JS file
+      if (!window.SCHEMAS_DATA || !window.SCHEMAS_DATA.schemas) {
         throw new Error(
-          "Index file not found. Please export schemas from Godot first."
+          "Schemas data not found. Please export schemas from Godot first using: Project → Tools → Export Schemas to Viewer"
         );
       }
 
-      const index = await indexResponse.json();
+      const schemasData = window.SCHEMAS_DATA.schemas;
 
-      // Load all schemas
-      const schemaPromises = [];
-
-      // Load interfaces
-      if (index.interfaces) {
-        for (const interfaceName of index.interfaces) {
-          schemaPromises.push(this.loadSchema(interfaceName, "interface"));
-        }
-      }
-
-      // Load classes
-      if (index.classes) {
-        for (const className of index.classes) {
-          schemaPromises.push(this.loadSchema(className, "class"));
-        }
-      }
-
-      const schemas = await Promise.all(schemaPromises);
-      this.schemas = schemas.filter((s) => s !== null);
+      this.schemas = schemasData.map((item) => ({
+        name: item.name,
+        type: item.type,
+        data: item.data,
+      }));
 
       if (this.schemas.length === 0) {
         listElement.innerHTML =
-          '<div class="empty-state">No schemas found. Export schemas from Godot using SchemaExporter.export_all_to_viewer()</div>';
+          '<div class="empty-state">No schemas found. Export schemas from Godot using: Project → Tools → Export Schemas to Viewer</div>';
       } else {
         this.renderSchemaList();
       }
     } catch (error) {
       console.error("Error loading schemas:", error);
       listElement.innerHTML = `<div class="error">⚠️ ${error.message}</div>`;
-    }
-  }
-
-  async loadSchema(name, expectedType) {
-    try {
-      const response = await fetch(`../schemas/${name}.json`);
-      if (!response.ok) return null;
-
-      const data = await response.json();
-      return {
-        name: name,
-        type: data.type || expectedType,
-        data: data,
-      };
-    } catch (error) {
-      console.error(`Error loading schema ${name}:`, error);
-      return null;
     }
   }
 
