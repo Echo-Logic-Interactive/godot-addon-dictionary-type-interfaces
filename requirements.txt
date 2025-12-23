@@ -1,0 +1,4 @@
+# Python dependencies for Type Interfaces addon development
+
+# GDScript linting and formatting
+gdtoolkit>=4.0.0

@@ -1,0 +1,2 @@
+disable:
+  - class-variable-name

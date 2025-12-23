@@ -1,6 +1,16 @@
+@tool
 class_name SchemaExporter
 
 extends RefCounted
+
+# Directory for schema viewer JSON files
+const VIEWER_SCHEMAS_DIR = "res://addons/type_interfaces/schema_viewer/schemas/"
+
+# Load the utility class once at compile time - uses relative path to work in CI
+static var GetInterfacesDir = load("addons/type_interfaces/src/utils/get_interfaces_dir.gd")
+
+# Call it to get the default directory
+static var default_interface_dir: String = GetInterfacesDir.get_interfaces_directory()
 
 ## Utility for exporting interface schemas to JSON for mod documentation
 ##
@@ -8,22 +18,22 @@ extends RefCounted
 ## modders to reference. Includes type information, optional fields, and
 ## base vs. extended schema separation.
 ##
-## [b]Configuration:[/b][br]
-## Set your interfaces directory in Project Settings:[br]
-## Project → Project Settings → General → Application → Type Interfaces → Interfaces Directory[br]
-## Or set it directly: [code]ProjectSettings.set_setting("application/type_interfaces/
-## interfaces_directory", "res://your/path/")[/code]
-##
 ## [b]Usage:[/b]
 ## [codeblock]
-## # Export all schemas
+## # Export all schemas (interfaces + classes) to viewer directory
+## SchemaExporter.export_all_to_viewer()
+##
+## # Export all schemas to custom location
 ## SchemaExporter.export_all_schemas("res://docs/schemas.json")
 ##
 ## # Export with custom interface directory
 ## SchemaExporter.export_all_schemas("res://docs/schemas.json", "res://custom/interfaces/")
 ##
-## # Export a single schema
-## SchemaExporter.export_schema("IPlayerData", "res://docs/player_schema.json")
+## # Export individual schemas to viewer
+## SchemaExporter.export_to_viewer("IPlayerData")
+##
+## # Export regular class schemas
+## SchemaExporter.export_class_to_viewer("Player")
 ##
 ## # Get schema as Dictionary for programmatic use
 ## var schema = SchemaExporter.get_schema_info("IPlayerData")
@@ -31,26 +41,100 @@ extends RefCounted
 ##
 ## @tutorial(Modding Guide): res://docs/MODDING_API.md
 
-## Default interfaces directory - can be overridden via project settings or method parameters
-## This must have a trailing slash
-const DEFAULT_INTERFACES_DIR := "res://interfaces/"
 
-
-## Get the configured interfaces directory
+## Export all interface schemas to the schema viewer directory
+## [br][br]
+## Exports individual JSON files for each interface AND regular class to the schema viewer,
+## which can then be viewed using the web-based schema viewer app.
+## [br][br]
+## [param interfaces_dir]: Optional custom interfaces directory (uses project settings if omitted)
+## [param include_classes]: Whether to also export regular GDScript classes (default: true)
 ## [br]
-## Checks project settings first, falls back to default
-static func get_interfaces_directory() -> String:
-	var setting_value := DEFAULT_INTERFACES_DIR
-	var project_setting := "application/type_interfaces/interfaces_directory"
+## Returns true if all exports succeed, false if any fail
+static func export_all_to_viewer(interfaces_dir: String = "", include_classes: bool = true) -> bool:
+	var dir = interfaces_dir if interfaces_dir else default_interface_dir
 
-	if ProjectSettings.has_setting(project_setting):
-		setting_value = ProjectSettings.get_setting(project_setting)
+	# Ensure viewer schemas directory exists
+	var viewer_dir_path = VIEWER_SCHEMAS_DIR.replace("res://", "")
+	if not DirAccess.dir_exists_absolute(viewer_dir_path):
+		var result = DirAccess.make_dir_recursive_absolute(viewer_dir_path)
+		if result != OK:
+			push_error(
+				"[SchemaExporter] Failed to create viewer schemas directory: %s" % viewer_dir_path
+			)
+			return false
 
-	# Ensure it ends with a slash
-	if not setting_value.ends_with("/"):
-		setting_value += "/"
+	var interface_classes = get_available_interfaces(dir)
+	var success = true
+	var total_count = 0
 
-	return setting_value
+	# Export interfaces
+	for interface_name in interface_classes:
+		if not export_to_viewer(interface_name, dir):
+			success = false
+		else:
+			total_count += 1
+
+	# Export regular classes if requested
+	var regular_classes: Array[String] = []
+	if include_classes:
+		regular_classes = get_available_classes()
+		for class_name_str in regular_classes:
+			if not export_class_to_viewer(class_name_str):
+				success = false
+			else:
+				total_count += 1
+
+	# Create an index file listing all types
+	var index = {
+		"version": "1.0.0",
+		"generated": Time.get_datetime_string_from_system(),
+		"interfaces": interface_classes,
+		"classes": regular_classes,
+		"total_count": total_count
+	}
+
+	var index_path = VIEWER_SCHEMAS_DIR + "_index.json"
+	if not _write_json_to_file(index_path, index):
+		success = false
+
+	# Generate a single JavaScript file with all schemas embedded (for file:// protocol)
+	if not _generate_schemas_js_file(interface_classes, regular_classes, dir):
+		success = false
+
+	print(
+		(
+			"[SchemaExporter] Exported %d schemas to viewer (%d interfaces, %d classes)"
+			% [total_count, interface_classes.size(), regular_classes.size()]
+		)
+	)
+	return success
+
+
+## Export a single interface schema to the schema viewer directory
+## [br][br]
+## [param interface_name]: Name of the interface class (e.g., "IPlayerData")[br]
+## [param interfaces_dir]: Optional custom interfaces directory (uses project settings if omitted)
+## [br]
+## Returns true if export succeeds, false otherwise
+static func export_to_viewer(interface_name: String, interfaces_dir: String = "") -> bool:
+	var dir = interfaces_dir if interfaces_dir else default_interface_dir
+	var schema_info = get_schema_info(interface_name, dir)
+
+	if not schema_info:
+		push_error("[SchemaExporter] Failed to get schema for %s" % interface_name)
+		return false
+
+	var schema_doc = {
+		"version": "1.0.0",
+		"generated": Time.get_datetime_string_from_system(),
+		"type": "interface",
+		"interface": interface_name,
+		"schema": schema_info
+	}
+
+	var output_path = VIEWER_SCHEMAS_DIR + interface_name + ".json"
+	return _write_json_to_file(output_path, schema_doc)
 
 
 ## Export all registered interface schemas to a JSON file
@@ -63,7 +147,7 @@ static func get_interfaces_directory() -> String:
 ## [br]
 ## Returns true if export succeeds, false otherwise
 static func export_all_schemas(output_path: String, interfaces_dir: String = "") -> bool:
-	var dir = interfaces_dir if interfaces_dir else get_interfaces_directory()
+	var dir = interfaces_dir if interfaces_dir else default_interface_dir
 	var schemas = _create_json_metadata()
 	schemas["interfaces"] = {}
 
@@ -88,7 +172,7 @@ static func export_all_schemas(output_path: String, interfaces_dir: String = "")
 static func export_schema(
 	interface_name: String, output_path: String, interfaces_dir: String = ""
 ) -> bool:
-	var dir = interfaces_dir if interfaces_dir else get_interfaces_directory()
+	var dir = interfaces_dir if interfaces_dir else default_interface_dir
 	var schema_info = get_schema_info(interface_name, dir)
 	if not schema_info:
 		push_error("[SchemaExporter] Failed to get schema for %s" % interface_name)
@@ -101,6 +185,47 @@ static func export_schema(
 	return _write_json_to_file(output_path, schema_doc)
 
 
+## Export a single regular class schema to the schema viewer directory
+## [br][br]
+## [param class_name]: Name of the class (e.g., "Player")[br]
+## [br]
+## Returns true if export succeeds, false otherwise
+static func export_class_to_viewer(class_name_str: String) -> bool:
+	var class_info = get_class_info(class_name_str)
+
+	if not class_info or class_info.is_empty():
+		push_error("[SchemaExporter] Failed to get class info for %s" % class_name_str)
+		return false
+
+	var schema_doc = {
+		"version": "1.0.0",
+		"generated": Time.get_datetime_string_from_system(),
+		"type": "class",
+		"class": class_name_str,
+		"schema": class_info
+	}
+
+	var output_path = VIEWER_SCHEMAS_DIR + class_name_str + ".json"
+	return _write_json_to_file(output_path, schema_doc)
+
+
+## Get comprehensive information for a regular class
+## [br][br]
+## Parses the GDScript file to extract variables, exports, and type information
+## [br][br]
+## [param class_name_str]: Name of the class
+## [br]
+## Returns a Dictionary containing class info, or empty if not found
+static func get_class_info(class_name_str: String) -> Dictionary:
+	# Find the script file for this class
+	var script_path = _find_class_script(class_name_str)
+	if script_path.is_empty():
+		return {}
+
+	# Parse the script file
+	return _parse_class_file(script_path, class_name_str)
+
+
 ## Get comprehensive schema information for an interface
 ## [br][br]
 ## [param interface_name]: Name of the interface class[br]
@@ -108,7 +233,7 @@ static func export_schema(
 ## [br]
 ## Returns a Dictionary containing schema, field info, and metadata, or null if not found
 static func get_schema_info(interface_name: String, interfaces_dir: String = "") -> Dictionary:
-	var dir = interfaces_dir if interfaces_dir else get_interfaces_directory()
+	var dir = interfaces_dir if interfaces_dir else default_interface_dir
 	var instance = _create_interface_instance(interface_name, dir)
 	if not instance:
 		return {}
@@ -148,7 +273,7 @@ static func get_schema_info(interface_name: String, interfaces_dir: String = "")
 ## [br]
 ## Returns an Array[String] of interface class names
 static func get_available_interfaces(interfaces_dir: String = "") -> Array[String]:
-	var dir_path = interfaces_dir if interfaces_dir else get_interfaces_directory()
+	var dir_path = interfaces_dir if interfaces_dir else default_interface_dir
 	var interface_classes: Array[String] = []
 
 	var dir = DirAccess.open(dir_path)
@@ -198,7 +323,7 @@ static func _parse_type_info(
 		"is_extended": not is_base_field
 	}
 
-	var dir_path = interfaces_dir if interfaces_dir else get_interfaces_directory()
+	var dir_path = interfaces_dir if interfaces_dir else default_interface_dir
 
 	# Check for nullable type
 	if type_string_value.ends_with("?"):
@@ -227,7 +352,7 @@ static func _is_interface_type(type_string_value: String, interfaces_dir: String
 	if not type_string_value.begins_with("I"):
 		return false
 
-	var dir_path = interfaces_dir if interfaces_dir else get_interfaces_directory()
+	var dir_path = interfaces_dir if interfaces_dir else default_interface_dir
 	var script_path = dir_path + "%s.gd" % type_string_value
 	return FileAccess.file_exists(script_path)
 
@@ -241,7 +366,7 @@ static func _is_interface_type(type_string_value: String, interfaces_dir: String
 ## [br]
 ## Returns an instance of the interface, or null if creation fails
 static func _create_interface_instance(interface_name: String, interfaces_dir: String):
-	var dir_path = interfaces_dir if interfaces_dir else get_interfaces_directory()
+	var dir_path = interfaces_dir if interfaces_dir else default_interface_dir
 	var script_path = dir_path + "%s.gd" % interface_name
 
 	if not ResourceLoader.exists(script_path):
@@ -253,8 +378,16 @@ static func _create_interface_instance(interface_name: String, interfaces_dir: S
 		push_error("[SchemaExporter] Failed to load interface script: %s" % script_path)
 		return null
 
-	# Create an instance of the loaded script
-	var instance = script.new()
+	# Create an instance of the loaded script with empty data
+	# Try different constructor signatures to handle both TypedDict and ExtendableInterface
+	var instance = null
+
+	# First try with just empty dict (for classes with custom _init)
+	instance = script.new({})
+
+	if not instance:
+		push_error("[SchemaExporter] Failed to create instance of %s" % interface_name)
+		return null
 
 	# Verify it's a valid interface (has schema methods)
 	if not instance.has_method("_get_schema") and not instance.has_method("_get_base_schema"):
@@ -271,7 +404,7 @@ static func _create_interface_instance(interface_name: String, interfaces_dir: S
 ## Dynamically parses the actual GDScript file to extract the class documentation.
 ## Looks for ## comments that appear after the extends statement.
 static func _get_class_description(interface_name: String, interfaces_dir: String) -> String:
-	var dir_path = interfaces_dir if interfaces_dir else get_interfaces_directory()
+	var dir_path = interfaces_dir if interfaces_dir else default_interface_dir
 	var file_path = dir_path + "%s.gd" % interface_name
 
 	if not FileAccess.file_exists(file_path):
@@ -347,7 +480,7 @@ static func _get_class_description(interface_name: String, interfaces_dir: Strin
 ## [br]
 ## Returns true if export succeeds, false otherwise
 static func export_typescript_definitions(output_path: String, interfaces_dir: String = "") -> bool:
-	var dir = interfaces_dir if interfaces_dir else get_interfaces_directory()
+	var dir = interfaces_dir if interfaces_dir else default_interface_dir
 	var ts_content = _generate_typescript_content(dir)
 	return _write_text_to_file(output_path, ts_content)
 
@@ -444,7 +577,7 @@ static func _generate_typescript_content(interfaces_dir: String) -> String:
 	var ts_content = "// Auto-generated TypeScript definitions for game interfaces\n"
 	ts_content += "// Generated: %s\n\n" % Time.get_datetime_string_from_system()
 
-	var dir_path = interfaces_dir if interfaces_dir else get_interfaces_directory()
+	var dir_path = interfaces_dir if interfaces_dir else default_interface_dir
 	var interface_classes = get_available_interfaces(dir_path)
 
 	for interface_name in interface_classes:
@@ -465,3 +598,276 @@ static func _generate_typescript_content(interfaces_dir: String) -> String:
 		ts_content += "}\n\n"
 
 	return ts_content
+
+
+## Generate schemas.js file with embedded data
+static func _generate_schemas_js_file(
+	interface_classes: Array[String], regular_classes: Array[String], interfaces_dir: String
+) -> bool:
+	var dir_to_use = interfaces_dir if interfaces_dir else default_interface_dir
+
+	print("[SchemaExporter] Starting schema export...")
+	print("[SchemaExporter] Interfaces directory: ", dir_to_use)
+
+	var all_schemas = []
+
+	# Get interfaces
+	var interfaces = interface_classes
+	print("[SchemaExporter] Found %d interfaces: %s" % [interfaces.size(), interfaces])
+
+	for interface_name in interfaces:
+		print("[SchemaExporter] Processing interface: ", interface_name)
+		var schema_info = get_schema_info(interface_name, dir_to_use)
+		print("[SchemaExporter]   Schema info keys: ", schema_info.keys())
+
+		if not schema_info.is_empty():
+			schema_info["type"] = "interface"
+			schema_info["interface"] = interface_name
+			all_schemas.append(schema_info)
+			print("[SchemaExporter]   ✓ Added interface: ", interface_name)
+		else:
+			print("[SchemaExporter]   ✗ Empty schema for: ", interface_name)
+
+	# Get classes
+	var classes = regular_classes
+	print("[SchemaExporter] Found %d classes: %s" % [classes.size(), classes])
+
+	for class_name_str in classes:
+		print("[SchemaExporter] Processing class: ", class_name_str)
+		var class_info = get_class_info(class_name_str)
+		print("[SchemaExporter]   Class info keys: ", class_info.keys())
+
+		if not class_info.is_empty():
+			class_info["type"] = "class"
+			class_info["class"] = class_name_str
+			all_schemas.append(class_info)
+			print("[SchemaExporter]   ✓ Added class: ", class_name_str)
+		else:
+			print("[SchemaExporter]   ✗ Empty info for: ", class_name_str)
+
+	print("[SchemaExporter] Total schemas to export: ", all_schemas.size())
+
+	# Build the JavaScript file content
+	var js_content = "// Auto-generated schemas for viewer\n"
+	js_content += "// Generated: %s\n\n" % Time.get_datetime_string_from_system()
+	js_content += "window.SCHEMAS_DATA = {\n"
+	js_content += '  "version": "1.0.0",\n'
+	js_content += '  "generated": "%s",\n' % Time.get_datetime_string_from_system()
+	js_content += '  "schemas": [\n'
+
+	var schema_json_strings: Array[String] = []
+	for schema in all_schemas:
+		var schema_type = schema.get("type", "unknown")
+		var schema_name = schema.get("interface", schema.get("class", "Unknown"))
+		var schema_doc = {
+			"name": schema_name,
+			"type": schema_type,
+			"data":
+			{"version": "1.0.0", "type": schema_type, schema_type: schema_name, "schema": schema}
+		}
+		schema_json_strings.append("    " + JSON.stringify(schema_doc))
+
+	js_content += ",\n".join(schema_json_strings)
+	js_content += "\n  ]\n"
+	js_content += "};\n"
+
+	var output_path = "res://addons/type_interfaces/schema_viewer/app/schemas.js"
+	var success = _write_text_to_file(output_path, js_content)
+
+	if success:
+		print(
+			"[SchemaExporter] ✓ Successfully wrote schemas.js with %d schemas" % all_schemas.size()
+		)
+	else:
+		push_error("[SchemaExporter] ✗ Failed to write schemas.js")
+
+	return success
+
+
+## Get all available regular classes with class_name declarations
+## [br]
+## Returns an Array[String] of class names
+static func get_available_classes() -> Array[String]:
+	var classes: Array[String] = []
+	var cache_file = ".godot/global_script_class_cache.cfg"
+
+	if not FileAccess.file_exists(cache_file):
+		push_warning("[SchemaExporter] Global class cache not found")
+		return classes
+
+	var config = ConfigFile.new()
+	var err = config.load(cache_file)
+	if err != OK:
+		push_warning("[SchemaExporter] Failed to load global class cache")
+		return classes
+
+	if not config.has_section_key("", "list"):
+		return classes
+
+	var class_list = config.get_value("", "list", [])
+	for class_entry in class_list:
+		if class_entry is Dictionary and class_entry.has("class"):
+			var class_name_str = class_entry["class"]
+			# Include all classes except interfaces (starting with I)
+			if not class_name_str.begins_with("I"):
+				classes.append(class_name_str)
+
+	classes.sort()
+	return classes
+
+
+## Find the script file path for a class name
+static func _find_class_script(class_name_str: String) -> String:
+	var cache_file = ".godot/global_script_class_cache.cfg"
+
+	if not FileAccess.file_exists(cache_file):
+		return ""
+
+	var config = ConfigFile.new()
+	if config.load(cache_file) != OK:
+		return ""
+
+	if not config.has_section_key("", "list"):
+		return ""
+
+	var class_list = config.get_value("", "list", [])
+	for class_entry in class_list:
+		if class_entry is Dictionary and class_entry.get("class") == class_name_str:
+			return class_entry.get("path", "")
+
+	return ""
+
+
+## Parse a GDScript class file to extract variable information
+static func _parse_class_file(script_path: String, class_name_str: String) -> Dictionary:
+	if not FileAccess.file_exists(script_path):
+		push_warning("[SchemaExporter] File not found: %s" % script_path)
+		return {}
+
+	var file = FileAccess.open(script_path, FileAccess.READ)
+	if not file:
+		push_error("[SchemaExporter] Failed to open file: %s" % script_path)
+		return {}
+
+	var content = file.get_as_text()
+	file.close()
+
+	var result = {
+		"class_name": class_name_str,
+		"script_path": script_path,
+		"extends": "",
+		"description": "",
+		"fields": {},
+		"exports": {},
+		"signals": []
+	}
+
+	# Split into lines and handle multi-line statements
+	var lines = content.split("\n")
+	var i = 0
+	var in_class_doc = false
+	var doc_lines: Array[String] = []
+	var pending_export = false
+
+	while i < lines.size():
+		var line = lines[i]
+		var trimmed = line.strip_edges()
+
+		# Handle line continuation (backslash)
+		while trimmed.ends_with("\\") and i < lines.size() - 1:
+			i += 1
+			trimmed = trimmed.trim_suffix("\\") + " " + lines[i].strip_edges()
+
+		# Get extends information
+		if trimmed.begins_with("extends "):
+			result["extends"] = trimmed.substr(8).strip_edges()
+			i += 1
+			continue
+
+		# Collect documentation
+		if trimmed.begins_with("##"):
+			in_class_doc = true
+			var comment = trimmed.substr(2).strip_edges()
+			if not comment.is_empty():
+				doc_lines.append(comment)
+			i += 1
+			continue
+		elif in_class_doc and not trimmed.begins_with("#") and not trimmed.is_empty():
+			in_class_doc = false
+			result["description"] = " ".join(doc_lines)
+			doc_lines.clear()
+
+		# Parse signals
+		if trimmed.begins_with("signal "):
+			var signal_decl = trimmed.substr(7)
+			var signal_name = signal_decl.split("(")[0].strip_edges()
+			if not signal_name.is_empty():
+				result["signals"].append(signal_name)
+			i += 1
+			continue
+
+		# Track @export annotations
+		if trimmed.begins_with("@export"):
+			pending_export = true
+			i += 1
+			continue
+
+		# Parse variables
+		if trimmed.begins_with("var "):
+			var var_line = trimmed.substr(4)
+			var var_info = _extract_var_info(var_line, pending_export)
+
+			if var_info and not var_info["name"].is_empty():
+				if not var_info["name"].begins_with("_"):
+					var field_info = {"type": var_info["type"], "is_export": var_info["is_export"]}
+					result["fields"][var_info["name"]] = field_info
+					if var_info["is_export"]:
+						result["exports"][var_info["name"]] = field_info
+
+			pending_export = false
+			i += 1
+			continue
+
+		# Reset export flag if we hit non-var line
+		if not trimmed.is_empty() and not trimmed.begins_with("#"):
+			pending_export = false
+
+		i += 1
+
+	return result
+
+
+## Extract variable information from a var declaration line
+static func _extract_var_info(var_line: String, is_export: bool) -> Dictionary:
+	var info = {"name": "", "type": "Variant", "is_export": is_export}
+
+	# Remove comments
+	var line_no_comment = var_line
+	if "#" in var_line:
+		line_no_comment = var_line.split("#")[0]
+
+	# Handle type annotation: name: Type = value
+	if ":" in line_no_comment and not ":=" in line_no_comment:
+		var parts = line_no_comment.split(":", false, 1)
+		info["name"] = parts[0].strip_edges()
+
+		if parts.size() > 1:
+			# Extract type (before = or end of line)
+			var type_part = parts[1]
+			if "=" in type_part:
+				type_part = type_part.split("=")[0]
+			info["type"] = type_part.strip_edges()
+
+	# Handle inferred type: name := value
+	elif ":=" in line_no_comment:
+		info["name"] = line_no_comment.split(":=")[0].strip_edges()
+		info["type"] = "Inferred"
+
+	# Handle untyped: name = value or just name
+	else:
+		if "=" in line_no_comment:
+			info["name"] = line_no_comment.split("=")[0].strip_edges()
+		else:
+			info["name"] = line_no_comment.strip_edges()
+
+	return info

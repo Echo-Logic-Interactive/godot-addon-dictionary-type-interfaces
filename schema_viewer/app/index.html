@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Schema Viewer - Type Interfaces</title>
+    <link rel="stylesheet" href="viewer.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <h1>📚 Schema Viewer</h1>
+        <p class="subtitle">Browse your game's type interfaces and classes</p>
+      </header>
+
+      <div class="controls">
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="Search schemas..."
+          class="search-input"
+        />
+        <div class="filter-buttons">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="interface">Interfaces</button>
+          <button class="filter-btn" data-filter="class">Classes</button>
+        </div>
+      </div>
+
+      <div class="content">
+        <aside class="sidebar">
+          <div class="sidebar-header">
+            <h3>Schemas</h3>
+            <span id="schemaCount" class="badge">0</span>
+          </div>
+          <div id="schemaList" class="schema-list">
+            <div class="loading">Loading schemas...</div>
+          </div>
+        </aside>
+
+        <main class="main">
+          <div id="schemaDetail" class="schema-detail">
+            <div class="welcome">
+              <h2>Welcome to Schema Viewer</h2>
+              <p>Select a schema from the list to view its details.</p>
+              <div class="instructions">
+                <h3>Getting Started:</h3>
+                <ol>
+                  <li>
+                    In Godot, go to
+                    <strong>Project → Tools → Export Schemas to Viewer</strong>
+                  </li>
+                  <li>
+                    Schemas will be generated in
+                    <code>schema_viewer/app/schemas.js</code>
+                  </li>
+                  <li>Refresh this page to see your schemas</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      <footer class="footer">
+        <p>Generated with Type Interfaces Addon | Godot 4.x</p>
+      </footer>
+    </div>
+
+    <script src="schemas.js"></script>
+    <script src="viewer.js"></script>
+  </body>
+</html>
