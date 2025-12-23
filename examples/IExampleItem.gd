@@ -11,6 +11,29 @@ extends ExtendableInterface
 ## - Quantity tracking
 ## - Nullable optional fields
 ## - Array types for tags/categories
+##
+## Types:[br]
+## [codeblock]
+## {
+##     "id": "String",
+##     "item_name": "String",
+##     "quantity": "int",
+##     "weight": "float?",
+##     "description": "String?",
+##     "tags": "Array<String>",
+## }
+## [/codeblock]
+##
+## Example:[br]
+## [codeblock]
+## {
+##     "id": "item_001",
+##     "item_name": "Health Potion",
+##     "quantity": 5,
+##     "weight": 0.5,
+##     "tags": ["consumable", "potion", "health"]
+## }
+## [/codeblock]
 
 var id: String:
 	get:

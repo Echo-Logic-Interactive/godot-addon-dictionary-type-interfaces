@@ -1,0 +1,19 @@
+{
+	"class": "WeatherProfile",
+	"generated": "2025-12-23T23:04:42",
+	"schema": {
+		"class_name": "WeatherProfile",
+		"description": "",
+		"exports": {
+
+		},
+		"extends": "Resource",
+		"fields": {
+
+		},
+		"script_path": "res://scripts/world/weather/WeatherProfileClass.gd",
+		"signals": []
+	},
+	"type": "class",
+	"version": "1.0.0"
+}

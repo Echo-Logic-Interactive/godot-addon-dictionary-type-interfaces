@@ -1,0 +1,66 @@
+{
+	"class": "LightingController",
+	"generated": "2025-12-23T23:04:42",
+	"schema": {
+		"class_name": "LightingController",
+		"description": "",
+		"exports": {
+
+		},
+		"extends": "Node",
+		"fields": {
+			"base_profile": {
+				"is_export": false,
+				"type": "LightingProfileClass"
+			},
+			"cloud_coverage": {
+				"is_export": false,
+				"type": "float"
+			},
+			"color_tint": {
+				"is_export": false,
+				"type": "Color"
+			},
+			"light_mult": {
+				"is_export": false,
+				"type": "float"
+			},
+			"modified": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"modified_profile": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"moon_color": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"phase": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"stars_color": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"sun_color": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"time_phase_duration": {
+				"is_export": false,
+				"type": "float"
+			},
+			"weather_profile": {
+				"is_export": false,
+				"type": "WeatherProfile"
+			}
+		},
+		"script_path": "res://scripts/world/lighting/LightingControllerClass.gd",
+		"signals": []
+	},
+	"type": "class",
+	"version": "1.0.0"
+}

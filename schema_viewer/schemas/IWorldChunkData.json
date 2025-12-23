@@ -1,0 +1,49 @@
+{
+	"generated": "2025-12-23T23:04:42",
+	"interface": "IWorldChunkData",
+	"schema": {
+		"base_schema": {
+			"chunk_id": "String",
+			"chunk_position": "Vector2",
+			"terrain_type": "String"
+		},
+		"description": "World chunk data interface - terrain and objects within a chunk Example:  [codeblock] { \"chunk_id\": \"0_0\", \"chunk_position\": { \"x\": 0, \"y\": 0 },...",
+		"fields": {
+			"chunk_id": {
+				"element_type": "",
+				"is_array": false,
+				"is_base_field": true,
+				"is_extended": false,
+				"is_interface": false,
+				"is_nullable": false,
+				"type": "String"
+			},
+			"chunk_position": {
+				"element_type": "",
+				"is_array": false,
+				"is_base_field": true,
+				"is_extended": false,
+				"is_interface": false,
+				"is_nullable": false,
+				"type": "Vector2"
+			},
+			"terrain_type": {
+				"element_type": "",
+				"is_array": false,
+				"is_base_field": true,
+				"is_extended": false,
+				"is_interface": false,
+				"is_nullable": false,
+				"type": "String"
+			}
+		},
+		"full_schema": {
+			"chunk_id": "String",
+			"chunk_position": "Vector2",
+			"terrain_type": "String"
+		},
+		"is_extendable": true
+	},
+	"type": "interface",
+	"version": "1.0.0"
+}

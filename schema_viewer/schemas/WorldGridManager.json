@@ -1,0 +1,152 @@
+{
+	"class": "WorldGridManager",
+	"generated": "2025-12-23T23:04:42",
+	"schema": {
+		"class_name": "WorldGridManager",
+		"description": "Get all tiles (for exporting or iteration)",
+		"exports": {
+
+		},
+		"extends": "Node",
+		"fields": {
+			"all_tiles": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"closest": {
+				"is_export": false,
+				"type": "Dictionary"
+			},
+			"closest_dist": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"data": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"dist": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"error": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"file": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"filtered": {
+				"is_export": false,
+				"type": "Array[Dictionary]"
+			},
+			"grid_array": {
+				"is_export": false,
+				"type": "Array"
+			},
+			"grid_max": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"grid_min": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"grid_pos": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"inside": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"j": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"json": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"json_string": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"local_pos": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"max_point": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"metadata": {
+				"is_export": false,
+				"type": "Dictionary"
+			},
+			"min_point": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"polygon": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"result": {
+				"is_export": false,
+				"type": "Array[Dictionary]"
+			},
+			"search_max": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"search_min": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"stats": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"tile": {
+				"is_export": false,
+				"type": "Dictionary"
+			},
+			"tile_type": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"tiles": {
+				"is_export": false,
+				"type": "Array"
+			},
+			"type_str": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"used_cells": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"world_max": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"world_min": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"world_pos": {
+				"is_export": false,
+				"type": "Inferred"
+			}
+		},
+		"script_path": "res://scripts/world/WorldGridManagerClass.gd",
+		"signals": [
+			"world_data_updated"
+		]
+	},
+	"type": "class",
+	"version": "1.0.0"
+}

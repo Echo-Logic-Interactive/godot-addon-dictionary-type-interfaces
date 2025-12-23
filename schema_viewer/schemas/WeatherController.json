@@ -1,0 +1,87 @@
+{
+	"class": "WeatherController",
+	"generated": "2025-12-23T23:04:42",
+	"schema": {
+		"class_name": "WeatherController",
+		"description": "",
+		"exports": {
+			"current_weather": {
+				"is_export": true,
+				"type": "Weather"
+			}
+		},
+		"extends": "Node",
+		"fields": {
+			"cumulative": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"current_profile": {
+				"is_export": false,
+				"type": "WeatherProfile"
+			},
+			"current_weather": {
+				"is_export": true,
+				"type": "Weather"
+			},
+			"new_weather": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"next_weather_change_time": {
+				"is_export": false,
+				"type": "float"
+			},
+			"profile_map": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"result": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"roll": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"target_profile": {
+				"is_export": false,
+				"type": "WeatherProfile"
+			},
+			"target_weather": {
+				"is_export": false,
+				"type": "Weather"
+			},
+			"total": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"transition_duration": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"weather_blend": {
+				"is_export": false,
+				"type": "float"
+			},
+			"weather_rotation_timer": {
+				"is_export": false,
+				"type": "float"
+			},
+			"weather_transition_duration": {
+				"is_export": false,
+				"type": "float"
+			},
+			"weather_transition_time": {
+				"is_export": false,
+				"type": "float"
+			}
+		},
+		"script_path": "res://scripts/world/weather/WeatherControllerClass.gd",
+		"signals": [
+			"weather_changed"
+		]
+	},
+	"type": "class",
+	"version": "1.0.0"
+}

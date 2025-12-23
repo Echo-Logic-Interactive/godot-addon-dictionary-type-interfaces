@@ -1,0 +1,74 @@
+{
+	"class": "WeatherEffects",
+	"generated": "2025-12-23T23:04:42",
+	"schema": {
+		"class_name": "WeatherEffects",
+		"description": "",
+		"exports": {
+
+		},
+		"extends": "Node2D",
+		"fields": {
+			"blend_factor": {
+				"is_export": false,
+				"type": "float"
+			},
+			"cloud_color": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"coverage": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"current_profile": {
+				"is_export": false,
+				"type": "WeatherProfileClass"
+			},
+			"density": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"fog_color": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"opacity": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"rain_alpha": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"rain_amount": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"rain_speed": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"target_profile": {
+				"is_export": false,
+				"type": "WeatherProfileClass"
+			},
+			"wind_dir": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"wind_force": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"wind_strength": {
+				"is_export": false,
+				"type": "Inferred"
+			}
+		},
+		"script_path": "res://scripts/world/weather/WeatherEffectsClass.gd",
+		"signals": []
+	},
+	"type": "class",
+	"version": "1.0.0"
+}

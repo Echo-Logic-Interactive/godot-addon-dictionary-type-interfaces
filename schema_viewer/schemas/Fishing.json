@@ -1,0 +1,53 @@
+{
+	"class": "Fishing",
+	"generated": "2025-12-23T23:04:42",
+	"schema": {
+		"class_name": "Fishing",
+		"description": "",
+		"exports": {
+			"is_casting": {
+				"is_export": true,
+				"type": "bool"
+			}
+		},
+		"extends": "Node2D",
+		"fields": {
+			"action": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"dist": {
+				"is_export": false,
+				"type": "float"
+			},
+			"dt": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"is_casting": {
+				"is_export": true,
+				"type": "bool"
+			},
+			"line_length": {
+				"is_export": false,
+				"type": "float"
+			},
+			"power": {
+				"is_export": false,
+				"type": "float"
+			},
+			"target_tile": {
+				"is_export": false,
+				"type": "Vector2i"
+			},
+			"target_world": {
+				"is_export": false,
+				"type": "Vector2"
+			}
+		},
+		"script_path": "res://scripts/fishing/FishingClass.gd",
+		"signals": []
+	},
+	"type": "class",
+	"version": "1.0.0"
+}

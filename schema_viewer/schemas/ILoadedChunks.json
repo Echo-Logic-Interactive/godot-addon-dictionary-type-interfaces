@@ -1,0 +1,27 @@
+{
+	"generated": "2025-12-23T23:04:42",
+	"interface": "ILoadedChunks",
+	"schema": {
+		"base_schema": {
+			"4": "IWorldChunkData"
+		},
+		"description": "Interface for loaded world chunks dictionaries Keys are chunk IDs (strings), values must conform to IWorldChunkData Example:  [codeblock] { \"0_0\":...",
+		"fields": {
+			"4": {
+				"element_type": "",
+				"is_array": false,
+				"is_base_field": true,
+				"is_extended": false,
+				"is_interface": true,
+				"is_nullable": false,
+				"type": "IWorldChunkData"
+			}
+		},
+		"full_schema": {
+			"4": "IWorldChunkData"
+		},
+		"is_extendable": false
+	},
+	"type": "interface",
+	"version": "1.0.0"
+}
