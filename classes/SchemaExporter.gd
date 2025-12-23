@@ -1,4 +1,4 @@
-class_name SchemaExporter
+@tool
 
 extends RefCounted
 

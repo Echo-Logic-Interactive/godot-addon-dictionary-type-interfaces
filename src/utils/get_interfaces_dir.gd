@@ -1,4 +1,4 @@
-class_name GetInterfacesDir
+@tool
 
 extends RefCounted
 
