@@ -13,6 +13,28 @@ extends ExtendableInterface
 ## - Nullable types (position?)
 ## - Extendable schema for mods
 ## - LOOSE validation by default
+##
+## Types:[br]
+## [codeblock]
+## {
+##     "name": "String",
+##     "level": "int",
+##     "health": "float",
+##     "max_health": "float",
+##     "position": "Vector2?"
+## }
+## [/codeblock]
+##
+# Example:[br]
+## [codeblock]
+## {
+##     "name": "Hero",
+##     "level": 5,
+##     "health": 85.5,
+##     "max_health": 100.0,
+##     "position": { "x": 10, "y": 20 }
+## }
+## [/codeblock]
 
 # Typed property accessors for IDE support
 var name: String:

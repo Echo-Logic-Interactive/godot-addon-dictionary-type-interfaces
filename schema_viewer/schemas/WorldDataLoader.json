@@ -1,0 +1,113 @@
+{
+	"class": "WorldDataLoader",
+	"generated": "2025-12-23T23:04:42",
+	"schema": {
+		"class_name": "WorldDataLoader",
+		"description": "Export tiles organized by chunks (for large worlds)",
+		"exports": {
+
+		},
+		"extends": "Node",
+		"fields": {
+			"all_tiles": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"chunk_data": {
+				"is_export": false,
+				"type": "Dictionary"
+			},
+			"chunk_id": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"chunk_ids": {
+				"is_export": false,
+				"type": "Array[String]"
+			},
+			"chunk_pos": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"chunk_x": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"chunk_y": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"chunks": {
+				"is_export": false,
+				"type": "Dictionary"
+			},
+			"data": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"error": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"existing_tile": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"export_tile": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"file": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"file_path": {
+				"is_export": false,
+				"type": "String"
+			},
+			"grid_pos": {
+				"is_export": false,
+				"type": "Vector2i"
+			},
+			"json": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"json_string": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"metadata": {
+				"is_export": false,
+				"type": "Dictionary"
+			},
+			"special_locations": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"success": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"tile_type": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"tile_type_str": {
+				"is_export": false,
+				"type": "Inferred"
+			},
+			"tiles": {
+				"is_export": false,
+				"type": "Inferred"
+			}
+		},
+		"script_path": "res://scripts/world/WorldDataLoaderClass.gd",
+		"signals": [
+			"chunk_loaded",
+			"world_loaded"
+		]
+	},
+	"type": "class",
+	"version": "1.0.0"
+}

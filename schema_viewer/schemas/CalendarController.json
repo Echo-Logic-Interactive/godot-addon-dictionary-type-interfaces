@@ -1,0 +1,78 @@
+{
+	"class": "CalendarController",
+	"generated": "2025-12-23T23:04:42",
+	"schema": {
+		"class_name": "CalendarController",
+		"description": "",
+		"exports": {
+
+		},
+		"extends": "Node",
+		"fields": {
+			"calendar = FileAccess.open(\"res": {
+				"is_export": false,
+				"type": "//data/calendar/calendar-year.json\", FileAccess.READ)"
+			},
+			"calendar_data_days": {
+				"is_export": false,
+				"type": "Array[Dictionary]"
+			},
+			"calendar_data_months": {
+				"is_export": false,
+				"type": "Dictionary"
+			},
+			"calendar_events": {
+				"is_export": false,
+				"type": "Dictionary"
+			},
+			"event_data": {
+				"is_export": false,
+				"type": "Dictionary"
+			},
+			"event_id": {
+				"is_export": false,
+				"type": "int"
+			},
+			"events = FileAccess.open(\"res": {
+				"is_export": false,
+				"type": "//data/calendar/calendar-events.json\", FileAccess.READ)"
+			},
+			"month_id": {
+				"is_export": false,
+				"type": "int"
+			},
+			"month_name": {
+				"is_export": false,
+				"type": "String"
+			},
+			"raw_calendar_data": {
+				"is_export": false,
+				"type": "Dictionary"
+			},
+			"raw_events_data": {
+				"is_export": false,
+				"type": "Dictionary"
+			},
+			"today": {
+				"is_export": false,
+				"type": "Variant"
+			},
+			"today_data": {
+				"is_export": false,
+				"type": "Dictionary"
+			},
+			"today_day_index": {
+				"is_export": false,
+				"type": "Variant"
+			},
+			"today_events": {
+				"is_export": false,
+				"type": "Array[Dictionary]"
+			}
+		},
+		"script_path": "res://scripts/world/time/CalendarController.gd",
+		"signals": []
+	},
+	"type": "class",
+	"version": "1.0.0"
+}
