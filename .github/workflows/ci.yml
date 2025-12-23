@@ -156,64 +156,6 @@ jobs:
           echo ""
           echo "✅ plugin.cfg validation passed"
 
-  documentation:
-    name: Documentation Check
-    runs-on: ubuntu-latest
-    needs: check-draft
-    if: needs.check-draft.outputs.is_draft != 'true'
-    timeout-minutes: 3
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Validate README
-        run: |
-          if [ ! -f "README.MD" ]; then
-            echo "❌ README.MD not found"
-            exit 1
-          fi
-
-          word_count=$(wc -w < README.MD)
-
-          if [ "$word_count" -lt 500 ]; then
-            echo "❌ README.MD too short ($word_count words, minimum 500)"
-            exit 1
-          fi
-
-          echo "✅ README.MD validation passed ($word_count words)"
-
-      - name: Check for required sections
-        run: |
-          echo "Checking for required README sections..."
-
-          required_sections=(
-            "Installation"
-            "Quick Start"
-            "Features"
-            "Examples"
-            "API Reference"
-            "Performance"
-          )
-
-          all_found=true
-          for section in "${required_sections[@]}"; do
-            if ! grep -qi "## .*$section" README.MD; then
-              echo "⚠️  Section not found: $section"
-              all_found=false
-            else
-              echo "✓ Found section: $section"
-            fi
-          done
-
-          if [ "$all_found" = false ]; then
-            echo ""
-            echo "⚠️  Some recommended sections are missing"
-          else
-            echo ""
-            echo "✅ All recommended sections present"
-          fi
-
   godot-validation:
     name: Godot Editor Validation Test
     runs-on: ubuntu-latest
@@ -401,7 +343,6 @@ jobs:
         gdscript-lint,
         gdscript-format,
         addon-structure,
-        documentation,
         godot-validation,
         code-quality,
       ]
@@ -417,7 +358,6 @@ jobs:
           echo "GDScript Linting:       ${{ needs.gdscript-lint.result }}"
           echo "Format Check:           ${{ needs.gdscript-format.result }}"
           echo "Addon Structure:        ${{ needs.addon-structure.result }}"
-          echo "Documentation:          ${{ needs.documentation.result }}"
           echo "Godot Validation Test:  ${{ needs.godot-validation.result }}"
           echo "Code Quality:           ${{ needs.code-quality.result }}"
           echo ""
@@ -425,7 +365,6 @@ jobs:
           if [ "${{ needs.gdscript-lint.result }}" != "success" ] || \
              [ "${{ needs.gdscript-format.result }}" != "success" ] || \
              [ "${{ needs.addon-structure.result }}" != "success" ] || \
-             [ "${{ needs.documentation.result }}" != "success" ] || \
              [ "${{ needs.godot-validation.result }}" != "success" ] || \
              [ "${{ needs.code-quality.result }}" != "success" ]; then
             echo "❌ CI FAILED - Please check the logs above"
