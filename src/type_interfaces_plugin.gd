@@ -12,10 +12,10 @@ func _enter_tree() -> void:
 	_register_project_settings()
 
 	# Register autoload singleton for runtime validation
-	add_autoload_singleton("TypeInterfaces", "./type_interfaces_runtime.gd")
+	add_autoload_singleton("TypeInterfaces", "type_interfaces_runtime.gd")
 
 	# Register ModdingAPI singleton for mod support
-	add_autoload_singleton("ModdingAPI", "./interface_modding_api.gd")
+	add_autoload_singleton("ModdingAPI", "interface_modding_api.gd")
 
 
 func _exit_tree() -> void:

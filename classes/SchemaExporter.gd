@@ -9,6 +9,9 @@ static var GetInterfacesDir = load("../src/utils/get_interfaces_dir.gd")
 # Call it to get the default directory
 static var default_interface_dir: String = GetInterfacesDir.get_interfaces_directory()
 
+# Directory for schema viewer JSON files
+const VIEWER_SCHEMAS_DIR = "res://addons/type_interfaces/schema_viewer/schemas/"
+
 ## Utility for exporting interface schemas to JSON for mod documentation
 ##
 ## Provides tools to export schema definitions in a format that's easy for
@@ -17,20 +20,89 @@ static var default_interface_dir: String = GetInterfacesDir.get_interfaces_direc
 ##
 ## [b]Usage:[/b]
 ## [codeblock]
-## # Export all schemas
+## # Export all schemas to viewer directory (for schema viewer app)
+## SchemaExporter.export_all_to_viewer()
+##
+## # Export all schemas to custom location
 ## SchemaExporter.export_all_schemas("res://docs/schemas.json")
 ##
 ## # Export with custom interface directory
 ## SchemaExporter.export_all_schemas("res://docs/schemas.json", "res://custom/interfaces/")
 ##
-## # Export a single schema
-## SchemaExporter.export_schema("IPlayerData", "res://docs/player_schema.json")
+## # Export individual schemas to viewer
+## SchemaExporter.export_to_viewer("IPlayerData")
 ##
 ## # Get schema as Dictionary for programmatic use
 ## var schema = SchemaExporter.get_schema_info("IPlayerData")
 ## [/codeblock]
 ##
 ## @tutorial(Modding Guide): res://docs/MODDING_API.md
+
+
+## Export all interface schemas to the schema viewer directory
+## [br][br]
+## Exports individual JSON files for each interface to the schema viewer,
+## which can then be viewed using the web-based schema viewer app.
+## [br][br]
+## [param interfaces_dir]: Optional custom interfaces directory (uses project settings if omitted)
+## [br]
+## Returns true if all exports succeed, false if any fail
+static func export_all_to_viewer(interfaces_dir: String = "") -> bool:
+	var dir = interfaces_dir if interfaces_dir else default_interface_dir
+	
+	# Ensure viewer schemas directory exists
+	var viewer_dir_path = VIEWER_SCHEMAS_DIR.replace("res://", "")
+	if not DirAccess.dir_exists_absolute(viewer_dir_path):
+		var result = DirAccess.make_dir_recursive_absolute(viewer_dir_path)
+		if result != OK:
+			push_error("[SchemaExporter] Failed to create viewer schemas directory: %s" % viewer_dir_path)
+			return false
+	
+	var interface_classes = get_available_interfaces(dir)
+	var success = true
+	
+	for interface_name in interface_classes:
+		if not export_to_viewer(interface_name, dir):
+			success = false
+	
+	# Also create an index file listing all interfaces
+	var index = {
+		"version": "1.0.0",
+		"generated": Time.get_datetime_string_from_system(),
+		"interfaces": interface_classes
+	}
+	
+	var index_path = VIEWER_SCHEMAS_DIR + "_index.json"
+	if not _write_json_to_file(index_path, index):
+		success = false
+	
+	print("[SchemaExporter] Exported %d interfaces to viewer" % interface_classes.size())
+	return success
+
+
+## Export a single interface schema to the schema viewer directory
+## [br][br]
+## [param interface_name]: Name of the interface class (e.g., "IPlayerData")[br]
+## [param interfaces_dir]: Optional custom interfaces directory (uses project settings if omitted)
+## [br]
+## Returns true if export succeeds, false otherwise
+static func export_to_viewer(interface_name: String, interfaces_dir: String = "") -> bool:
+	var dir = interfaces_dir if interfaces_dir else default_interface_dir
+	var schema_info = get_schema_info(interface_name, dir)
+	
+	if not schema_info:
+		push_error("[SchemaExporter] Failed to get schema for %s" % interface_name)
+		return false
+	
+	var schema_doc = {
+		"version": "1.0.0",
+		"generated": Time.get_datetime_string_from_system(),
+		"interface": interface_name,
+		"schema": schema_info
+	}
+	
+	var output_path = VIEWER_SCHEMAS_DIR + interface_name + ".json"
+	return _write_json_to_file(output_path, schema_doc)
 
 
 ## Export all registered interface schemas to a JSON file
