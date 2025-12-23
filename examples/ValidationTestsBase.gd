@@ -4,21 +4,12 @@ extends RefCounted
 ## Shared test logic for both editor and CI validation
 ## This base class contains all test implementations to avoid duplication
 
-# Load interface scripts at runtime to avoid CI path resolution issues
-var IExamplePlayer = null
-var IExampleItem = null
-var IExampleQuest = null
-var TypeInterfaces = null
-var validation_mode = null
+var IExamplePlayer = preload("res://addons/type_interfaces/examples/IExamplePlayer.gd")
+var IExampleItem = preload("res://addons/type_interfaces/examples/IExampleItem.gd")
+var IExampleQuest = preload("res://addons/type_interfaces/examples/IExampleQuest.gd")
 
-
-func _init() -> void:
-	# Load dependencies at runtime
-	IExamplePlayer = preload("./IExamplePlayer.gd")
-	IExampleItem = preload("./IExampleItem.gd")
-	IExampleQuest = preload("./IExampleQuest.gd")
-	TypeInterfaces = preload("../src/type_interfaces_runtime.gd").new()
-	validation_mode = TypeInterfaces.ValidationMode
+# TypeInterfaces is registered as an autoload in both local and CI environments
+var ValidationMode = TypeInterfaces.ValidationMode
 
 
 func run_all_tests() -> void:
@@ -157,7 +148,7 @@ func test_strict_vs_loose_mode() -> void:
 			"custom_field": "Extra data is OK",
 			"another_field": 42
 		},
-		validation_mode.LOOSE
+		ValidationMode.LOOSE
 	)
 
 	print("✓ LOOSE mode: Created player with extra fields")
@@ -174,7 +165,7 @@ func test_strict_vs_loose_mode() -> void:
 			"max_health": 100.0,
 			"position": Vector2.ZERO
 		},
-		validation_mode.STRICT
+		ValidationMode.STRICT
 	)
 
 	print("✓ STRICT mode: Created player without extra fields")

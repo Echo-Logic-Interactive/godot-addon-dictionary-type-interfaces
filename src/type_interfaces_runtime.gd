@@ -10,7 +10,7 @@ enum ValidationMode {
 }
 
 # Load the utility class to get interfaces directory
-var GetInterfacesDir = load("./utils/get_interfaces_dir.gd")
+var GetInterfacesDir = preload("./utils/get_interfaces_dir.gd")
 
 ## Get the interfaces directory from project settings
 var interface_dir = GetInterfacesDir.get_interfaces_directory()
