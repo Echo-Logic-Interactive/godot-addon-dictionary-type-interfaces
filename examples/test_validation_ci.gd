@@ -1,3 +1,4 @@
+# We need to extend SceneTree to run this in the CI environment hence the 2 files calling VTB
 extends SceneTree
 
 ## CI-compatible wrapper for validation tests

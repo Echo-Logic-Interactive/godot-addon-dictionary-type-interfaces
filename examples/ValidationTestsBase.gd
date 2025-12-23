@@ -7,7 +7,8 @@ extends RefCounted
 var IExamplePlayer
 var IExampleItem
 var IExampleQuest
-var ValidationMode
+var TypeInterfaces
+var validation_mode
 
 
 func _init() -> void:
@@ -17,8 +18,9 @@ func _init() -> void:
 	IExampleItem = load("res://addons/type_interfaces/examples/IExampleItem.gd")
 	IExampleQuest = load("res://addons/type_interfaces/examples/IExampleQuest.gd")
 
-	# TypeInterfaces is registered as an autoload in both local and CI environments
-	ValidationMode = TypeInterfaces.ValidationMode
+	# Load TypeInterfaces manually - autoloads don't work in headless CI mode
+	var TypeInterfacesScript = load("res://addons/type_interfaces/src/type_interfaces_runtime.gd")
+	validation_mode = TypeInterfacesScript.new().ValidationMode
 
 
 func run_all_tests() -> void:
@@ -157,7 +159,7 @@ func test_strict_vs_loose_mode() -> void:
 			"custom_field": "Extra data is OK",
 			"another_field": 42
 		},
-		ValidationMode.LOOSE
+		validation_mode.LOOSE
 	)
 
 	print("✓ LOOSE mode: Created player with extra fields")
@@ -174,7 +176,7 @@ func test_strict_vs_loose_mode() -> void:
 			"max_health": 100.0,
 			"position": Vector2.ZERO
 		},
-		ValidationMode.STRICT
+		validation_mode.STRICT
 	)
 
 	print("✓ STRICT mode: Created player without extra fields")
