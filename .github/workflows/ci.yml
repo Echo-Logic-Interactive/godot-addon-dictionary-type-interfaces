@@ -273,12 +273,22 @@ jobs:
           echo "GDScript files:"
           find addons -name "*.gd" -type f
 
+      - name: Setup Godot project for testing
+        run: |
+          # Import the project to generate .godot/
+          ./Godot_v4.3-stable_linux.x86_64 --headless --editor --quit-after 10 2>&1 | tee import_output.txt
+
+          # Verify the plugin was loaded
+          if grep -q "type_interfaces" import_output.txt; then
+            echo "✓ Plugin imported successfully"
+          fi
+
       - name: Run editor validation test
         run: |
           echo "Running test_validation_ci.gd..."
 
-          # Run the editor script from addon examples
-          ./Godot_v4.3-stable_linux.x86_64 --headless --script addons/type_interfaces/examples/test_validation_ci.gd --quit 2>&1 | tee test_output.txt
+          # Run with --path to ensure project context
+          ./Godot_v4.3-stable_linux.x86_64 --headless --path . --script addons/type_interfaces/examples/test_validation_ci.gd 2>&1 | tee test_output.txt
 
           # Check if test completed successfully
           if grep -q "EDITOR VALIDATION TEST COMPLETE" test_output.txt; then
