@@ -1,18 +1,19 @@
+@tool
 class_name SchemaExporter
 
 extends RefCounted
+
+# Load the utility class once at compile time - uses relative path to work in CI
+static var GetInterfacesDir = load("../src/utils/get_interfaces_dir.gd")
+
+# Call it to get the default directory
+static var default_interface_dir: String = GetInterfacesDir.get_interfaces_directory()
 
 ## Utility for exporting interface schemas to JSON for mod documentation
 ##
 ## Provides tools to export schema definitions in a format that's easy for
 ## modders to reference. Includes type information, optional fields, and
 ## base vs. extended schema separation.
-##
-## [b]Configuration:[/b][br]
-## Set your interfaces directory in Project Settings:[br]
-## Project → Project Settings → General → Application → Type Interfaces → Interfaces Directory[br]
-## Or set it directly: [code]ProjectSettings.set_setting("application/type_interfaces/
-## interfaces_directory", "res://your/path/")[/code]
 ##
 ## [b]Usage:[/b]
 ## [codeblock]
@@ -31,27 +32,6 @@ extends RefCounted
 ##
 ## @tutorial(Modding Guide): res://docs/MODDING_API.md
 
-## Default interfaces directory - can be overridden via project settings or method parameters
-## This must have a trailing slash
-const DEFAULT_INTERFACES_DIR := "res://interfaces/"
-
-
-## Get the configured interfaces directory
-## [br]
-## Checks project settings first, falls back to default
-static func get_interfaces_directory() -> String:
-	var setting_value := DEFAULT_INTERFACES_DIR
-	var project_setting := "application/type_interfaces/interfaces_directory"
-
-	if ProjectSettings.has_setting(project_setting):
-		setting_value = ProjectSettings.get_setting(project_setting)
-
-	# Ensure it ends with a slash
-	if not setting_value.ends_with("/"):
-		setting_value += "/"
-
-	return setting_value
-
 
 ## Export all registered interface schemas to a JSON file
 ## [br][br]
@@ -63,7 +43,7 @@ static func get_interfaces_directory() -> String:
 ## [br]
 ## Returns true if export succeeds, false otherwise
 static func export_all_schemas(output_path: String, interfaces_dir: String = "") -> bool:
-	var dir = interfaces_dir if interfaces_dir else get_interfaces_directory()
+	var dir = interfaces_dir if interfaces_dir else default_interface_dir
 	var schemas = _create_json_metadata()
 	schemas["interfaces"] = {}
 
@@ -88,7 +68,7 @@ static func export_all_schemas(output_path: String, interfaces_dir: String = "")
 static func export_schema(
 	interface_name: String, output_path: String, interfaces_dir: String = ""
 ) -> bool:
-	var dir = interfaces_dir if interfaces_dir else get_interfaces_directory()
+	var dir = interfaces_dir if interfaces_dir else default_interface_dir
 	var schema_info = get_schema_info(interface_name, dir)
 	if not schema_info:
 		push_error("[SchemaExporter] Failed to get schema for %s" % interface_name)
@@ -108,7 +88,7 @@ static func export_schema(
 ## [br]
 ## Returns a Dictionary containing schema, field info, and metadata, or null if not found
 static func get_schema_info(interface_name: String, interfaces_dir: String = "") -> Dictionary:
-	var dir = interfaces_dir if interfaces_dir else get_interfaces_directory()
+	var dir = interfaces_dir if interfaces_dir else default_interface_dir
 	var instance = _create_interface_instance(interface_name, dir)
 	if not instance:
 		return {}
@@ -148,7 +128,7 @@ static func get_schema_info(interface_name: String, interfaces_dir: String = "")
 ## [br]
 ## Returns an Array[String] of interface class names
 static func get_available_interfaces(interfaces_dir: String = "") -> Array[String]:
-	var dir_path = interfaces_dir if interfaces_dir else get_interfaces_directory()
+	var dir_path = interfaces_dir if interfaces_dir else default_interface_dir
 	var interface_classes: Array[String] = []
 
 	var dir = DirAccess.open(dir_path)
@@ -198,7 +178,7 @@ static func _parse_type_info(
 		"is_extended": not is_base_field
 	}
 
-	var dir_path = interfaces_dir if interfaces_dir else get_interfaces_directory()
+	var dir_path = interfaces_dir if interfaces_dir else default_interface_dir
 
 	# Check for nullable type
 	if type_string_value.ends_with("?"):
@@ -227,7 +207,7 @@ static func _is_interface_type(type_string_value: String, interfaces_dir: String
 	if not type_string_value.begins_with("I"):
 		return false
 
-	var dir_path = interfaces_dir if interfaces_dir else get_interfaces_directory()
+	var dir_path = interfaces_dir if interfaces_dir else default_interface_dir
 	var script_path = dir_path + "%s.gd" % type_string_value
 	return FileAccess.file_exists(script_path)
 
@@ -241,7 +221,7 @@ static func _is_interface_type(type_string_value: String, interfaces_dir: String
 ## [br]
 ## Returns an instance of the interface, or null if creation fails
 static func _create_interface_instance(interface_name: String, interfaces_dir: String):
-	var dir_path = interfaces_dir if interfaces_dir else get_interfaces_directory()
+	var dir_path = interfaces_dir if interfaces_dir else default_interface_dir
 	var script_path = dir_path + "%s.gd" % interface_name
 
 	if not ResourceLoader.exists(script_path):
@@ -271,7 +251,7 @@ static func _create_interface_instance(interface_name: String, interfaces_dir: S
 ## Dynamically parses the actual GDScript file to extract the class documentation.
 ## Looks for ## comments that appear after the extends statement.
 static func _get_class_description(interface_name: String, interfaces_dir: String) -> String:
-	var dir_path = interfaces_dir if interfaces_dir else get_interfaces_directory()
+	var dir_path = interfaces_dir if interfaces_dir else default_interface_dir
 	var file_path = dir_path + "%s.gd" % interface_name
 
 	if not FileAccess.file_exists(file_path):
@@ -347,7 +327,7 @@ static func _get_class_description(interface_name: String, interfaces_dir: Strin
 ## [br]
 ## Returns true if export succeeds, false otherwise
 static func export_typescript_definitions(output_path: String, interfaces_dir: String = "") -> bool:
-	var dir = interfaces_dir if interfaces_dir else get_interfaces_directory()
+	var dir = interfaces_dir if interfaces_dir else default_interface_dir
 	var ts_content = _generate_typescript_content(dir)
 	return _write_text_to_file(output_path, ts_content)
 
@@ -444,7 +424,7 @@ static func _generate_typescript_content(interfaces_dir: String) -> String:
 	var ts_content = "// Auto-generated TypeScript definitions for game interfaces\n"
 	ts_content += "// Generated: %s\n\n" % Time.get_datetime_string_from_system()
 
-	var dir_path = interfaces_dir if interfaces_dir else get_interfaces_directory()
+	var dir_path = interfaces_dir if interfaces_dir else default_interface_dir
 	var interface_classes = get_available_interfaces(dir_path)
 
 	for interface_name in interface_classes:
