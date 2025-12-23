@@ -12,8 +12,12 @@ var validation_mode
 
 
 func _init() -> void:
-	# Use load() instead of preload() for CI compatibility
-	# preload() happens at parse time and fails in headless mode
+	# Load base classes first - required for headless CI mode where class_name isn't auto-registered
+	# Load in dependency order: TypedDict -> ExtendableInterface -> Example Interfaces
+	load("res://addons/type_interfaces/classes/TypedDict.gd")
+	load("res://addons/type_interfaces/classes/ExtendableInterface.gd")
+
+	# Now load example interfaces (they extend ExtendableInterface)
 	IExamplePlayer = load("res://addons/type_interfaces/examples/IExamplePlayer.gd")
 	IExampleItem = load("res://addons/type_interfaces/examples/IExampleItem.gd")
 	IExampleQuest = load("res://addons/type_interfaces/examples/IExampleQuest.gd")
