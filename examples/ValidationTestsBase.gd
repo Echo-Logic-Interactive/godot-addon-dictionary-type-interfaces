@@ -1,4 +1,5 @@
 class_name ValidationTestsBase
+
 extends RefCounted
 
 ## Shared test logic for both editor and CI validation
