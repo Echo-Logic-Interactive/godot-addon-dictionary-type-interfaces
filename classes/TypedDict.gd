@@ -9,13 +9,27 @@ extends RefCounted
 var _data: Dictionary = {}
 
 
+## Get TypeInterfaces singleton (handles both editor and headless mode)
+static func _get_type_interfaces():
+	if Engine.has_singleton("TypeInterfaces"):
+		return Engine.get_singleton("TypeInterfaces")
+	else:
+		# In headless/CI mode, load manually
+		var runtime_script = load("res://src/type_interfaces_runtime.gd")
+		if runtime_script:
+			return runtime_script.new()
+	return null
+
+
 func _init(initial_data: Dictionary = {}) -> void:
 	var schema = _get_schema()
 	if schema and not schema.is_empty():
-		var context = get_script().resource_path.get_file()
-		if not TypeInterfaces.validate(initial_data, schema, false, context):
-			# Validation already logged the specific error
-			return
+		var type_interfaces = _get_type_interfaces()
+		if type_interfaces:
+			var context = get_script().resource_path.get_file()
+			if not type_interfaces.validate(initial_data, schema, false, context):
+				# Validation already logged the specific error
+				return
 	_data = initial_data.duplicate()
 
 
@@ -41,10 +55,12 @@ func set_value(key: String, value) -> void:
 	_data[key] = value
 	var schema = _get_schema()
 	if schema and not schema.is_empty():
-		var context = get_script().resource_path.get_file()
-		if not TypeInterfaces.validate(_data, schema, false, context):
-			# Validation failed, rollback
-			_data.erase(key)
+		var type_interfaces = _get_type_interfaces()
+		if type_interfaces:
+			var context = get_script().resource_path.get_file()
+			if not type_interfaces.validate(_data, schema, false, context):
+				# Validation failed, rollback
+				_data.erase(key)
 
 
 ## Update multiple fields at once
@@ -53,7 +69,9 @@ func update(data: Dictionary) -> void:
 	_data.merge(data, true)
 	var schema = _get_schema()
 	if schema and not schema.is_empty():
-		var context = get_script().resource_path.get_file()
-		if not TypeInterfaces.validate(_data, schema, false, context):
-			# Validation failed, rollback
-			_data = backup
+		var type_interfaces = _get_type_interfaces()
+		if type_interfaces:
+			var context = get_script().resource_path.get_file()
+			if not type_interfaces.validate(_data, schema, false, context):
+				# Validation failed, rollback
+				_data = backup

@@ -1,3 +1,5 @@
+class_name SchemaExporter
+
 extends RefCounted
 
 # Load the utility class once at compile time - uses relative path to work in CI
