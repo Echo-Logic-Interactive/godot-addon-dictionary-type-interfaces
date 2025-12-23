@@ -31,3 +31,5 @@ __pycache__/
 # Python virtual environment (if using for tools)
 venv/
 .venv/
+
+schema_viewer/schemas/*.json
