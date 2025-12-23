@@ -60,6 +60,7 @@ validation and mod extensibility.
 - [Performance](#-performance)
 - [Examples](#-examples)
 - [Schema Exporter](#-schema-exporter)
+- [Schema Viewer](#-schema-viewer)
 - [Testing & Validation](#-testing--validation)
 - [Contributing](#-contributing)
 
@@ -265,6 +266,47 @@ player.set_value("custom_stats", {
 # Access typed nested interface
 var stats = player.get_value("custom_stats") as ICustomStats
 print(stats.strength)  # 10.0
+```
+
+### Dynamic Dictionaries (Collections)
+
+For dictionaries with **dynamic keys** but **typed values**, use TYPE\_\* constants:
+
+```gdscript
+class_name ILoadedChunks
+extends TypedDict
+
+## Dictionary with string keys, values validated against IWorldChunkData
+func _get_schema() -> Dictionary:
+	return {TYPE_STRING: "IWorldChunkData"}
+
+# Usage:
+var chunks = ILoadedChunks.new({
+	"chunk_0_0": {"position": Vector2(0, 0), "tiles": []},
+	"chunk_1_0": {"position": Vector2(1, 0), "tiles": []},
+})
+# Each value is validated against IWorldChunkData schema
+```
+
+**Supported dynamic patterns:**
+
+| Pattern                      | Description                   | Example Use Case          |
+| ---------------------------- | ----------------------------- | ------------------------- |
+| `{TYPE_STRING: "Interface"}` | String keys, interface values | Chunk storage, registries |
+| `{TYPE_STRING: TYPE_INT}`    | String keys, int values       | Simple lookup tables      |
+| `{TYPE_INT: "Interface"}`    | Int keys, interface values    | Indexed collections       |
+| `{TYPE_INT: TYPE_FLOAT}`     | Int keys, float values        | Numeric arrays            |
+
+**Important:** You **must** use `TYPE_*` constants (like `TYPE_STRING`, `TYPE_INT`), **not** the type names (`String`, `int`). This is a GDScript limitation where builtin type names cannot be used as dictionary keys.
+
+```gdscript
+# ❌ WRONG - Syntax error
+func _get_schema() -> Dictionary:
+	return {String: "IWorldChunkData"}  # "Builtin type cannot be used as a name"
+
+# ✅ CORRECT - Use TYPE_STRING constant
+func _get_schema() -> Dictionary:
+	return {TYPE_STRING: "IWorldChunkData"}
 ```
 
 ---
@@ -721,6 +763,60 @@ SchemaExporter.export_all_schemas("res://docs/schemas.json", "res://custom/inter
 - Normal game development
 - Runtime validation (handled automatically)
 - Simple projects without modding
+
+---
+
+## 🌐 Schema Viewer
+
+**Web-based documentation browser** for viewing interface and class schemas in a user-friendly format. Perfect for exploring your API, sharing documentation with mod developers, or reviewing your type system.
+
+### Quick Export (Recommended)
+
+The easiest way to generate and view schemas:
+
+1. In Godot Editor, go to **Project → Tools → Export Schemas to Viewer**
+2. Schemas are automatically exported to `addons/type_interfaces/schema_viewer/schemas/`
+3. Your default browser opens the viewer at `addons/type_interfaces/schema_viewer/app/index.html`
+
+That's it! The viewer automatically loads all exported schemas.
+
+### Manual Export (Advanced)
+
+For more control over the export process:
+
+```gdscript
+# Export all schemas to the viewer directory
+SchemaExporter.export_all_to_viewer()
+
+# Or specify custom paths
+SchemaExporter.export_all_to_viewer(
+    "res://custom/viewer/schemas/",
+    "res://custom/interfaces/"
+)
+```
+
+Then open `addons/type_interfaces/schema_viewer/app/index.html` in any web browser.
+
+### Features
+
+- **📋 Browse interfaces and classes** - See all your types in one place
+- **🔍 Search and filter** - Find types by name instantly
+- **📊 Field details** - View all properties with types and annotations
+- **🎨 Syntax highlighting** - Easy-to-read color-coded display
+- **💾 Offline** - No server needed, works from local filesystem
+- **🌙 Dark theme** - Matches Godot's color scheme
+
+### When to Use
+
+- **API exploration** - Browse your entire type system visually
+- **Mod documentation** - Share a clean interface reference with modders
+- **Code review** - Quickly inspect interface structure without opening files
+- **Learning** - Understand how interfaces and classes are structured
+
+**Not needed for:**
+
+- Runtime functionality (purely a documentation tool)
+- Simple projects with only a few interfaces
 
 ---
 
