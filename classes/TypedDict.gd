@@ -13,11 +13,12 @@ var _data: Dictionary = {}
 static func _get_type_interfaces():
 	if Engine.has_singleton("TypeInterfaces"):
 		return Engine.get_singleton("TypeInterfaces")
-	else:
+
 		# In headless/CI mode, load manually
-		var runtime_script = load("res://src/type_interfaces_runtime.gd")
-		if runtime_script:
-			return runtime_script.new()
+	var runtime_script = load("res://src/type_interfaces_runtime.gd")
+	if runtime_script:
+		return runtime_script.new()
+
 	return null
 
 
