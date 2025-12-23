@@ -7,7 +7,7 @@ extends RefCounted
 const VIEWER_SCHEMAS_DIR = "res://addons/type_interfaces/schema_viewer/schemas/"
 
 # Load the utility class once at compile time - uses relative path to work in CI
-static var GetInterfacesDir = load("../src/utils/get_interfaces_dir.gd")
+static var GetInterfacesDir = load("addons/type_interfaces/src/utils/get_interfaces_dir.gd")
 
 # Call it to get the default directory
 static var default_interface_dir: String = GetInterfacesDir.get_interfaces_directory()
@@ -378,9 +378,16 @@ static func _create_interface_instance(interface_name: String, interfaces_dir: S
 		push_error("[SchemaExporter] Failed to load interface script: %s" % script_path)
 		return null
 
-	# Create an instance of the loaded script with empty data and LOOSE validation
-	# This prevents validation errors during schema extraction
-	var instance = script.new({}, TypeInterfaces.ValidationMode.LOOSE)
+	# Create an instance of the loaded script with empty data
+	# Try different constructor signatures to handle both TypedDict and ExtendableInterface
+	var instance = null
+
+	# First try with just empty dict (for classes with custom _init)
+	instance = script.new({})
+
+	if not instance:
+		push_error("[SchemaExporter] Failed to create instance of %s" % interface_name)
+		return null
 
 	# Verify it's a valid interface (has schema methods)
 	if not instance.has_method("_get_schema") and not instance.has_method("_get_base_schema"):
@@ -593,6 +600,90 @@ static func _generate_typescript_content(interfaces_dir: String) -> String:
 	return ts_content
 
 
+## Generate schemas.js file with embedded data
+static func _generate_schemas_js_file(
+	interface_classes: Array[String], regular_classes: Array[String], interfaces_dir: String
+) -> bool:
+	var dir_to_use = interfaces_dir if interfaces_dir else default_interface_dir
+
+	print("[SchemaExporter] Starting schema export...")
+	print("[SchemaExporter] Interfaces directory: ", dir_to_use)
+
+	var all_schemas = []
+
+	# Get interfaces
+	var interfaces = interface_classes
+	print("[SchemaExporter] Found %d interfaces: %s" % [interfaces.size(), interfaces])
+
+	for interface_name in interfaces:
+		print("[SchemaExporter] Processing interface: ", interface_name)
+		var schema_info = get_schema_info(interface_name, dir_to_use)
+		print("[SchemaExporter]   Schema info keys: ", schema_info.keys())
+
+		if not schema_info.is_empty():
+			schema_info["type"] = "interface"
+			schema_info["interface"] = interface_name
+			all_schemas.append(schema_info)
+			print("[SchemaExporter]   ✓ Added interface: ", interface_name)
+		else:
+			print("[SchemaExporter]   ✗ Empty schema for: ", interface_name)
+
+	# Get classes
+	var classes = regular_classes
+	print("[SchemaExporter] Found %d classes: %s" % [classes.size(), classes])
+
+	for class_name_str in classes:
+		print("[SchemaExporter] Processing class: ", class_name_str)
+		var class_info = get_class_info(class_name_str)
+		print("[SchemaExporter]   Class info keys: ", class_info.keys())
+
+		if not class_info.is_empty():
+			class_info["type"] = "class"
+			class_info["class"] = class_name_str
+			all_schemas.append(class_info)
+			print("[SchemaExporter]   ✓ Added class: ", class_name_str)
+		else:
+			print("[SchemaExporter]   ✗ Empty info for: ", class_name_str)
+
+	print("[SchemaExporter] Total schemas to export: ", all_schemas.size())
+
+	# Build the JavaScript file content
+	var js_content = "// Auto-generated schemas for viewer\n"
+	js_content += "// Generated: %s\n\n" % Time.get_datetime_string_from_system()
+	js_content += "window.SCHEMAS_DATA = {\n"
+	js_content += '  "version": "1.0.0",\n'
+	js_content += '  "generated": "%s",\n' % Time.get_datetime_string_from_system()
+	js_content += '  "schemas": [\n'
+
+	var schema_json_strings: Array[String] = []
+	for schema in all_schemas:
+		var schema_type = schema.get("type", "unknown")
+		var schema_name = schema.get("interface", schema.get("class", "Unknown"))
+		var schema_doc = {
+			"name": schema_name,
+			"type": schema_type,
+			"data":
+			{"version": "1.0.0", "type": schema_type, schema_type: schema_name, "schema": schema}
+		}
+		schema_json_strings.append("    " + JSON.stringify(schema_doc))
+
+	js_content += ",\n".join(schema_json_strings)
+	js_content += "\n  ]\n"
+	js_content += "};\n"
+
+	var output_path = "res://addons/type_interfaces/schema_viewer/app/schemas.js"
+	var success = _write_text_to_file(output_path, js_content)
+
+	if success:
+		print(
+			"[SchemaExporter] ✓ Successfully wrote schemas.js with %d schemas" % all_schemas.size()
+		)
+	else:
+		push_error("[SchemaExporter] ✗ Failed to write schemas.js")
+
+	return success
+
+
 ## Get all available regular classes with class_name declarations
 ## [br]
 ## Returns an Array[String] of class names
@@ -744,61 +835,6 @@ static func _parse_class_file(script_path: String, class_name_str: String) -> Di
 		i += 1
 
 	return result
-
-
-## Generate a JavaScript file with all schemas embedded
-## This allows the viewer to work with file:// protocol without CORS issues
-static func _generate_schemas_js_file(
-	interface_classes: Array[String], regular_classes: Array[String], interfaces_dir: String
-) -> bool:
-	var js_content = "// Auto-generated schemas for viewer\n"
-	js_content += "// Generated: %s\n\n" % Time.get_datetime_string_from_system()
-	js_content += "window.SCHEMAS_DATA = {\n"
-	js_content += '  "version": "1.0.0",\n'
-	js_content += '  "generated": "%s",\n' % Time.get_datetime_string_from_system()
-	js_content += '  "schemas": [\n'
-
-	var schema_entries: Array[String] = []
-
-	# Add interfaces
-	for interface_name in interface_classes:
-		var schema_info = get_schema_info(interface_name, interfaces_dir)
-		if schema_info and not schema_info.is_empty():
-			var schema_doc = {
-				"name": interface_name,
-				"type": "interface",
-				"data":
-				{
-					"version": "1.0.0",
-					"type": "interface",
-					"interface": interface_name,
-					"schema": schema_info
-				}
-			}
-			schema_entries.append("    " + JSON.stringify(schema_doc))
-		else:
-			push_warning(
-				"[SchemaExporter] Failed to get schema info for interface: %s" % interface_name
-			)
-
-	# Add classes
-	for class_name_str in regular_classes:
-		var class_info = get_class_info(class_name_str)
-		if class_info and not class_info.is_empty():
-			var schema_doc = {
-				"name": class_name_str,
-				"type": "class",
-				"data":
-				{"version": "1.0.0", "type": "class", "class": class_name_str, "schema": class_info}
-			}
-			schema_entries.append("    " + JSON.stringify(schema_doc))
-
-	js_content += ",\n".join(schema_entries)
-	js_content += "\n  ]\n"
-	js_content += "};\n"
-
-	var output_path = "res://addons/type_interfaces/schema_viewer/app/schemas.js"
-	return _write_text_to_file(output_path, js_content)
 
 
 ## Extract variable information from a var declaration line
