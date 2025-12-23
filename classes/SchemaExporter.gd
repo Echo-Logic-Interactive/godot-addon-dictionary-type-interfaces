@@ -763,7 +763,7 @@ static func _generate_schemas_js_file(
 	# Add interfaces
 	for interface_name in interface_classes:
 		var schema_info = get_schema_info(interface_name, interfaces_dir)
-		if schema_info:
+		if schema_info and not schema_info.is_empty():
 			var schema_doc = {
 				"name": interface_name,
 				"type": "interface",
@@ -776,6 +776,10 @@ static func _generate_schemas_js_file(
 				}
 			}
 			schema_entries.append("    " + JSON.stringify(schema_doc))
+		else:
+			push_warning(
+				"[SchemaExporter] Failed to get schema info for interface: %s" % interface_name
+			)
 
 	# Add classes
 	for class_name_str in regular_classes:
