@@ -4,12 +4,21 @@ extends RefCounted
 ## Shared test logic for both editor and CI validation
 ## This base class contains all test implementations to avoid duplication
 
-var IExamplePlayer = preload("res://addons/type_interfaces/examples/IExamplePlayer.gd")
-var IExampleItem = preload("res://addons/type_interfaces/examples/IExampleItem.gd")
-var IExampleQuest = preload("res://addons/type_interfaces/examples/IExampleQuest.gd")
+var IExamplePlayer
+var IExampleItem
+var IExampleQuest
+var ValidationMode
 
-# TypeInterfaces is registered as an autoload in both local and CI environments
-var ValidationMode = TypeInterfaces.ValidationMode
+
+func _init() -> void:
+	# Use load() instead of preload() for CI compatibility
+	# preload() happens at parse time and fails in headless mode
+	IExamplePlayer = load("res://addons/type_interfaces/examples/IExamplePlayer.gd")
+	IExampleItem = load("res://addons/type_interfaces/examples/IExampleItem.gd")
+	IExampleQuest = load("res://addons/type_interfaces/examples/IExampleQuest.gd")
+
+	# TypeInterfaces is registered as an autoload in both local and CI environments
+	ValidationMode = TypeInterfaces.ValidationMode
 
 
 func run_all_tests() -> void:

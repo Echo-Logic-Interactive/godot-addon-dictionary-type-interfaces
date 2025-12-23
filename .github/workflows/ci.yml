@@ -273,6 +273,17 @@ jobs:
           echo "GDScript files:"
           find addons -name "*.gd" -type f
 
+      - name: Debug - Verify example interfaces exist
+        run: |
+          echo "Checking addon structure..."
+          ls -la addons/type_interfaces/
+          echo ""
+          echo "Examples directory:"
+          ls -la addons/type_interfaces/examples/
+          echo ""
+          echo "Checking if example interfaces exist:"
+          ls -la addons/type_interfaces/examples/IExample*.gd
+
       - name: Run editor validation test
         run: |
           echo "Running test_validation_ci.gd..."
