@@ -1,5 +1,3 @@
-class_name GetInterfacesDir
-
 extends RefCounted
 
 ## Get the configured interfaces directory
