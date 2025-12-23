@@ -217,13 +217,18 @@ jobs:
 
       - name: Setup Godot project for testing
         run: |
-          # Import the project to generate .godot/
-          ./Godot_v4.3-stable_linux.x86_64 --headless --editor --quit-after 10 2>&1 | tee import_output.txt
+          echo "Setting up minimal Godot project structure..."
 
-          # Verify the plugin was loaded
-          if grep -q "type_interfaces" import_output.txt; then
-            echo "✓ Plugin imported successfully"
-          fi
+          # Create .godot directory at project root
+          mkdir -p .godot
+
+          # Copy addon's class cache to project root
+          cp addons/type_interfaces/.godot/global_script_class_cache.cfg .godot/
+
+          echo "✓ Class cache installed from addon"
+          echo ""
+          echo "Registered addon classes:"
+          grep "class" .godot/global_script_class_cache.cfg | head -5
 
       - name: Run editor validation test
         run: |
