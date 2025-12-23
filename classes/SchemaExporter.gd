@@ -1,9 +1,10 @@
 @tool
+class_name SchemaExporter
 
 extends RefCounted
 
 # Load the utility class once at compile time - uses relative path to work in CI
-static var GetInterfacesDir = preload("../src/utils/get_interfaces_dir.gd")
+static var GetInterfacesDir = load("../src/utils/get_interfaces_dir.gd")
 
 # Call it to get the default directory
 static var default_interface_dir: String = GetInterfacesDir.get_interfaces_directory()

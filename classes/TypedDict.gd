@@ -1,4 +1,5 @@
 @tool
+class_name TypedDict
 
 extends RefCounted
 

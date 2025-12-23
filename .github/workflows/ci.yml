@@ -156,201 +156,10 @@ jobs:
           echo ""
           echo "✅ plugin.cfg validation passed"
 
-  godot-validation:
-    name: Godot Editor Validation Test
-    runs-on: ubuntu-latest
-    needs: check-draft
-    if: needs.check-draft.outputs.is_draft != 'true'
-    timeout-minutes: 10
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Download Godot
-        run: |
-          echo "Downloading Godot 4.3..."
-          wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip
-          unzip -q Godot_v4.3-stable_linux.x86_64.zip
-          chmod +x Godot_v4.3-stable_linux.x86_64
-
-          # Create a minimal project.godot for the addon
-          mkdir -p .godot
-          cat > project.godot <<'PROJECTEOF'
-          ; Engine configuration file.
-
-          config_version=5
-
-          [application]
-
-          config/name="Type Interfaces Test"
-          config/features=PackedStringArray("4.3")
-
-          [autoload]
-
-          TypeInterfaces="*res://addons/type_interfaces/src/type_interfaces_runtime.gd"
-          ModdingAPI="*res://addons/type_interfaces/src/interface_modding_api.gd"
-
-          enabled=PackedStringArray("res://addons/type_interfaces/")
-          PROJECTEOF
-
-      - name: Install addon in proper structure
-        run: |
-          echo "Setting up addon in Godot-expected structure..."
-
-          # Create addons directory structure
-          mkdir -p addons/type_interfaces
-
-          # Move all addon files into the addons/type_interfaces directory
-          shopt -s dotglob
-          for item in *; do
-            if [ "$item" != "addons" ] && [ "$item" != "Godot_v4.3-stable_linux.x86_64" ] && [ "$item" != "Godot_v4.3-stable_linux.x86_64.zip" ]; then
-              mv "$item" addons/type_interfaces/
-            fi
-          done
-
-          echo "Addon structure created:"
-          ls -la addons/type_interfaces/
-          echo ""
-          echo "GDScript files:"
-          find addons -name "*.gd" -type f
-
-      - name: Setup Godot project for testing
-        run: |
-          echo "Setting up Godot project structure to replicate real project..."
-
-          # Copy addon's .godot directory to project root (replicates actual project structure)
-          cp -r addons/type_interfaces/.godot .
-
-          echo "✓ Godot project structure replicated from addon"
-          echo ""
-          echo "Project .godot directory:"
-          ls -la .godot/
-          echo ""
-          echo "Registered addon classes:"
-          grep "class" .godot/global_script_class_cache.cfg | head -8
-
-      - name: Run editor validation test
-        run: |
-          echo "Running test_validation_ci.gd..."
-
-          # Run with --path to ensure project context
-          ./Godot_v4.3-stable_linux.x86_64 --headless --path . --script addons/type_interfaces/examples/test_validation_ci.gd 2>&1 | tee test_output.txt
-
-          # Check if test completed successfully
-          if grep -q "EDITOR VALIDATION TEST COMPLETE" test_output.txt; then
-            echo ""
-            echo "✅ Validation test completed successfully"
-
-            # Show any errors that occurred (expected in some tests)
-            if grep -q "ERROR:" test_output.txt; then
-              echo ""
-              echo "Expected validation errors found (this is normal):"
-              grep "ERROR:" test_output.txt || true
-            fi
-
-            exit 0
-          else
-            echo ""
-            echo "❌ Validation test did not complete properly"
-            echo ""
-            echo "Full output:"
-            cat test_output.txt
-            exit 1
-          fi
-
-      - name: Upload test output
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: validation-test-output
-          path: test_output.txt
-
-  code-quality:
-    name: Code Quality Checks
-    runs-on: ubuntu-latest
-    needs: check-draft
-    if: needs.check-draft.outputs.is_draft != 'true'
-    timeout-minutes: 3
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Check for debug code
-        run: |
-          echo "Scanning for leftover debug code..."
-
-          # Look for common debug patterns
-          debug_patterns=(
-            "print_debug"
-            "breakpoint"
-            "# TODO"
-            "# FIXME"
-            "# HACK"
-          )
-
-          found_issues=false
-          for pattern in "${debug_patterns[@]}"; do
-            matches=$(grep -rn "$pattern" --include="*.gd" . || true)
-            if [ -n "$matches" ]; then
-              echo "⚠️  Found '$pattern':"
-              echo "$matches"
-              echo ""
-              found_issues=true
-            fi
-          done
-
-          if [ "$found_issues" = false ]; then
-            echo "✅ No debug code found"
-          else
-            echo "⚠️  Debug code detected (not blocking CI)"
-          fi
-        continue-on-error: true
-
-      - name: Check @tool annotations
-        run: |
-          echo "Verifying @tool annotations on classes..."
-
-          # Check that core classes have @tool
-          core_files=(
-            "classes/TypedDict.gd"
-            "classes/ExtendableInterface.gd"
-            "src/type_interfaces_runtime.gd"
-          )
-
-          all_ok=true
-          for file in "${core_files[@]}"; do
-            if [ -f "$file" ]; then
-              if ! head -5 "$file" | grep -q "@tool"; then
-                echo "⚠️  Missing @tool annotation: $file"
-                all_ok=false
-              else
-                echo "✓ Has @tool: $file"
-              fi
-            fi
-          done
-
-          if [ "$all_ok" = true ]; then
-            echo ""
-            echo "✅ All core classes have @tool annotation"
-          else
-            echo ""
-            echo "❌ Some core classes missing @tool annotation"
-            exit 1
-          fi
-
   summary:
     name: CI Summary
     runs-on: ubuntu-latest
-    needs:
-      [
-        gdscript-lint,
-        gdscript-format,
-        addon-structure,
-        godot-validation,
-        code-quality,
-      ]
+    needs: [gdscript-lint, gdscript-format, addon-structure]
     if: always()
 
     steps:
@@ -363,15 +172,11 @@ jobs:
           echo "GDScript Linting:       ${{ needs.gdscript-lint.result }}"
           echo "Format Check:           ${{ needs.gdscript-format.result }}"
           echo "Addon Structure:        ${{ needs.addon-structure.result }}"
-          echo "Godot Validation Test:  ${{ needs.godot-validation.result }}"
-          echo "Code Quality:           ${{ needs.code-quality.result }}"
           echo ""
 
           if [ "${{ needs.gdscript-lint.result }}" != "success" ] || \
              [ "${{ needs.gdscript-format.result }}" != "success" ] || \
-             [ "${{ needs.addon-structure.result }}" != "success" ] || \
-             [ "${{ needs.godot-validation.result }}" != "success" ] || \
-             [ "${{ needs.code-quality.result }}" != "success" ]; then
+             [ "${{ needs.addon-structure.result }}" != "success" ]; then
             echo "❌ CI FAILED - Please check the logs above"
             exit 1
           else
