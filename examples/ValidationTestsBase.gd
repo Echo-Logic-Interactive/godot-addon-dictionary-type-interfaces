@@ -15,16 +15,24 @@ var validation_mode
 func _init() -> void:
 	# Load base classes first - required for headless CI mode where class_name isn't auto-registered
 	# Load in dependency order: TypedDict -> ExtendableInterface -> Example Interfaces
-	load("res://addons/type_interfaces/classes/TypedDict.gd")
-	load("res://addons/type_interfaces/classes/ExtendableInterface.gd")
+	load("res://addons/godot-addon-dictionary-type-interfaces/classes/TypedDict.gd")
+	load("res://addons/godot-addon-dictionary-type-interfaces/classes/ExtendableInterface.gd")
 
 	# Now load example interfaces (they extend ExtendableInterface)
-	IExamplePlayer = load("res://addons/type_interfaces/examples/IExamplePlayer.gd")
-	IExampleItem = load("res://addons/type_interfaces/examples/IExampleItem.gd")
-	IExampleQuest = load("res://addons/type_interfaces/examples/IExampleQuest.gd")
+	IExamplePlayer = load(
+		"res://addons/godot-addon-dictionary-type-interfaces/examples/IExamplePlayer.gd"
+	)
+	IExampleItem = load(
+		"res://addons/godot-addon-dictionary-type-interfaces/examples/IExampleItem.gd"
+	)
+	IExampleQuest = load(
+		"res://addons/godot-addon-dictionary-type-interfaces/examples/IExampleQuest.gd"
+	)
 
 	# Load TypeInterfaces manually - autoloads don't work in headless CI mode
-	var TypeInterfacesScript = load("res://addons/type_interfaces/src/type_interfaces_runtime.gd")
+	var TypeInterfacesScript = load(
+		"res://addons/godot-addon-dictionary-type-interfaces/src/type_interfaces_runtime.gd"
+	)
 	validation_mode = TypeInterfacesScript.new().ValidationMode
 
 

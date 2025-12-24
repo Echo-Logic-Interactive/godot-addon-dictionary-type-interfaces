@@ -17,5 +17,10 @@ extends EditorScript
 
 
 func _run() -> void:
-	var tests = preload("res://addons/type_interfaces/examples/ValidationTestsBase.gd").new()
+	var tests = (
+		preload(
+			"res://addons/godot-addon-dictionary-type-interfaces/examples/ValidationTestsBase.gd"
+		)
+		. new()
+	)
 	tests.run_all_tests()

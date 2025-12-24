@@ -1,70 +1,68 @@
 {
-	"class": "ValidationTestsBase",
-	"generated": "2025-12-23T23:04:42",
-	"schema": {
-		"class_name": "ValidationTestsBase",
-		"description": "Shared test logic for both editor and CI validation This base class contains all test implementations to avoid duplication",
-		"exports": {
-
-		},
-		"extends": "RefCounted",
-		"fields": {
-			"IExampleItem": {
-				"is_export": false,
-				"type": "Variant"
-			},
-			"IExamplePlayer": {
-				"is_export": false,
-				"type": "Variant"
-			},
-			"IExampleQuest": {
-				"is_export": false,
-				"type": "Variant"
-			},
-			"TypeInterfaces": {
-				"is_export": false,
-				"type": "Variant"
-			},
-			"TypeInterfacesScript = load(\"res": {
-				"is_export": false,
-				"type": "//addons/type_interfaces/src/type_interfaces_runtime.gd\")"
-			},
-			"complex_quest": {
-				"is_export": false,
-				"type": "Variant"
-			},
-			"loose_player": {
-				"is_export": false,
-				"type": "Variant"
-			},
-			"player": {
-				"is_export": false,
-				"type": "Variant"
-			},
-			"progress_str": {
-				"is_export": false,
-				"type": "Variant"
-			},
-			"quest": {
-				"is_export": false,
-				"type": "Variant"
-			},
-			"strict_player": {
-				"is_export": false,
-				"type": "Variant"
-			},
-			"sword": {
-				"is_export": false,
-				"type": "Variant"
-			},
-			"validation_mode": {
-				"is_export": false,
-				"type": "Variant"
-			}
-		},
-		"script_path": "res://addons/type_interfaces/examples/ValidationTestsBase.gd",
-		"signals": []
-	},
-	"type": "class",
-	"version": "1.0.0"
+  "class": "ValidationTestsBase",
+  "generated": "2025-12-23T23:04:42",
+  "schema": {
+    "class_name": "ValidationTestsBase",
+    "description": "Shared test logic for both editor and CI validation This base class contains all test implementations to avoid duplication",
+    "exports": {},
+    "extends": "RefCounted",
+    "fields": {
+      "IExampleItem": {
+        "is_export": false,
+        "type": "Variant"
+      },
+      "IExamplePlayer": {
+        "is_export": false,
+        "type": "Variant"
+      },
+      "IExampleQuest": {
+        "is_export": false,
+        "type": "Variant"
+      },
+      "TypeInterfaces": {
+        "is_export": false,
+        "type": "Variant"
+      },
+      "TypeInterfacesScript = load(\"res": {
+        "is_export": false,
+        "type": "//addons/godot-addon-dictionary-type-interfaces/src/type_interfaces_runtime.gd\")"
+      },
+      "complex_quest": {
+        "is_export": false,
+        "type": "Variant"
+      },
+      "loose_player": {
+        "is_export": false,
+        "type": "Variant"
+      },
+      "player": {
+        "is_export": false,
+        "type": "Variant"
+      },
+      "progress_str": {
+        "is_export": false,
+        "type": "Variant"
+      },
+      "quest": {
+        "is_export": false,
+        "type": "Variant"
+      },
+      "strict_player": {
+        "is_export": false,
+        "type": "Variant"
+      },
+      "sword": {
+        "is_export": false,
+        "type": "Variant"
+      },
+      "validation_mode": {
+        "is_export": false,
+        "type": "Variant"
+      }
+    },
+    "script_path": "res://addons/godot-addon-dictionary-type-interfaces/examples/ValidationTestsBase.gd",
+    "signals": []
+  },
+  "type": "class",
+  "version": "1.0.0"
 }

@@ -82,7 +82,7 @@ validation and mod extensibility.
 
    `git clone git@github.com:Echo-Logic-Interactive/godot-addon-dictionary-type-interfaces.git`
 
-2. Copy `addons/type_interfaces/` into your project's `addons/` directory
+2. Copy `addons/godot-addon-dictionary-type-interfaces/` into your project's `addons/` directory
 3. Enable the plugin in **Project Settings → Plugins → Type Interfaces**
 4. The `TypeInterfaces` and `ModdingAPI` singletons will be available automatically
 
@@ -99,7 +99,7 @@ This setting is used by **SchemaExporter** (optional utility) to find and docume
 **Alternative:** Set it programmatically:
 
 ```gdscript
-ProjectSettings.set_setting("application/type_interfaces/interfaces_directory", "res://your/path/")
+ProjectSettings.set_setting("application/godot-addon-dictionary-type-interfaces/interfaces_directory", "res://your/path/")
 ```
 
 ---
@@ -651,7 +651,7 @@ func validate(...) -> bool:
 
 The addon includes reference implementations demonstrating best practices:
 
-**Location:** `res://addons/type_interfaces/examples/`
+**Location:** `res://addons/godot-addon-dictionary-type-interfaces/examples/`
 
 #### IExamplePlayer.gd
 
@@ -686,7 +686,7 @@ Copy these examples to your project's interfaces directory and customize:
 
 ```bash
 # Copy examples to your project
-cp -r addons/type_interfaces/examples/* interfaces/
+cp -r addons/godot-addon-dictionary-type-interfaces/examples/* interfaces/
 
 # Or reference them directly
 extends IExamplePlayer
@@ -730,7 +730,7 @@ Configure your interfaces directory (if not using default `res://interfaces/`):
 ```gdscript
 # In Project Settings → Application → Type Interfaces → Interfaces Directory
 # Or programmatically:
-ProjectSettings.set_setting("application/type_interfaces/interfaces_directory", "res://my/interfaces/")
+ProjectSettings.set_setting("application/godot-addon-dictionary-type-interfaces/interfaces_directory", "res://my/interfaces/")
 ```
 
 ### Usage
@@ -775,8 +775,8 @@ SchemaExporter.export_all_schemas("res://docs/schemas.json", "res://custom/inter
 The easiest way to generate and view schemas:
 
 1. In Godot Editor, go to **Project → Tools → Export Schemas to Viewer**
-2. Schemas are automatically exported to `addons/type_interfaces/schema_viewer/schemas/`
-3. Your default browser opens the viewer at `addons/type_interfaces/schema_viewer/app/index.html`
+2. Schemas are automatically exported to `addons/godot-addon-dictionary-type-interfaces/schema_viewer/schemas/`
+3. Your default browser opens the viewer at `addons/godot-addon-dictionary-type-interfaces/schema_viewer/app/index.html`
 
 That's it! The viewer automatically loads all exported schemas.
 
@@ -795,7 +795,7 @@ SchemaExporter.export_all_to_viewer(
 )
 ```
 
-Then open `addons/type_interfaces/schema_viewer/app/index.html` in any web browser.
+Then open `addons/godot-addon-dictionary-type-interfaces/schema_viewer/app/index.html` in any web browser.
 
 ### Features
 
@@ -832,7 +832,7 @@ The addon includes an interactive validation test script that demonstrates all f
 
 #### How to Run
 
-1. Open the test script: `addons/type_interfaces/examples/test_validation_in_editor.gd`
+1. Open the test script: `addons/godot-addon-dictionary-type-interfaces/examples/test_validation_in_editor.gd`
 2. In Godot Editor, go to **File → Run**
 3. Watch the **Output** panel for test results
 

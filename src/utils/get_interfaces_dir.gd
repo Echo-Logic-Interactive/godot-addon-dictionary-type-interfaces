@@ -8,7 +8,7 @@ extends RefCounted
 ## [b]Configuration:[/b][br]
 ## Set your interfaces directory in Project Settings:[br]
 ## Project → Project Settings → General → Application → Type Interfaces → Interfaces Directory[br]
-## Or set it directly: [code]ProjectSettings.set_setting("application/type_interfaces/
+## Or set it directly: [code]ProjectSettings.set_setting("application/godot-addon-dictionary-type-interfaces/
 ## interfaces_directory", "res://your/path/")[/code]
 
 ## Default interfaces directory - can be overridden via project settings or method parameters
@@ -21,7 +21,7 @@ const DEFAULT_INTERFACES_DIR := "res://interfaces/"
 ## Checks project settings first, falls back to default
 static func get_interfaces_directory() -> String:
 	var setting_value := DEFAULT_INTERFACES_DIR
-	var project_setting := "application/type_interfaces/interfaces_directory"
+	var project_setting := "application/godot-addon-dictionary-type-interfaces/interfaces_directory"
 
 	if ProjectSettings.has_setting(project_setting):
 		setting_value = ProjectSettings.get_setting(project_setting)
