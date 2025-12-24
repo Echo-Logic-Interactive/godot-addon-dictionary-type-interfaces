@@ -4,10 +4,12 @@ class_name SchemaExporter
 extends RefCounted
 
 # Directory for schema viewer JSON files
-const VIEWER_SCHEMAS_DIR = "res://addons/type_interfaces/schema_viewer/schemas/"
+const VIEWER_SCHEMAS_DIR = "res://addons/godot-addon-dictionary-type-interfaces/schema_viewer/schemas/"
 
 # Load the utility class once at compile time - uses relative path to work in CI
-static var GetInterfacesDir = load("addons/type_interfaces/src/utils/get_interfaces_dir.gd")
+static var GetInterfacesDir = load(
+	"addons/godot-addon-dictionary-type-interfaces/src/utils/get_interfaces_dir.gd"
+)
 
 # Call it to get the default directory
 static var default_interface_dir: String = GetInterfacesDir.get_interfaces_directory()
@@ -671,7 +673,7 @@ static func _generate_schemas_js_file(
 	js_content += "\n  ]\n"
 	js_content += "};\n"
 
-	var output_path = "res://addons/type_interfaces/schema_viewer/app/schemas.js"
+	var output_path = "res://addons/godot-addon-dictionary-type-interfaces/schema_viewer/app/schemas.js"
 	var success = _write_text_to_file(output_path, js_content)
 
 	if success:

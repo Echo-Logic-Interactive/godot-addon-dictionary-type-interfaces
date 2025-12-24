@@ -30,16 +30,18 @@ func _exit_tree() -> void:
 
 ## Export all schemas to the viewer directory
 func _on_export_schemas() -> void:
-	var SchemaExporter = load("res://addons/type_interfaces/classes/SchemaExporter.gd")
+	var SchemaExporter = load(
+		"res://addons/godot-addon-dictionary-type-interfaces/classes/SchemaExporter.gd"
+	)
 	var success = SchemaExporter.export_all_to_viewer()
 
 	if success:
 		print("✓ Schemas exported to schema_viewer/schemas/")
-		print("Open: addons/type_interfaces/schema_viewer/app/index.html")
+		print("Open: addons/godot-addon-dictionary-type-interfaces/schema_viewer/app/index.html")
 
 		# Optional: Auto-open the viewer in default browser
 		var viewer_path = ProjectSettings.globalize_path(
-			"res://addons/type_interfaces/schema_viewer/app/index.html"
+			"res://addons/godot-addon-dictionary-type-interfaces/schema_viewer/app/index.html"
 		)
 		OS.shell_open(viewer_path)
 	else:
@@ -48,7 +50,7 @@ func _on_export_schemas() -> void:
 
 ## Register project settings for the addon
 func _register_project_settings() -> void:
-	var setting_name = "application/type_interfaces/interfaces_directory"
+	var setting_name = "application/godot-addon-dictionary-type-interfaces/interfaces_directory"
 	var default_value = "res://scripts/interfaces/"
 
 	if not ProjectSettings.has_setting(setting_name):
