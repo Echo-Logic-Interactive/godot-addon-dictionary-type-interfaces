@@ -8,7 +8,8 @@ extends RefCounted
 ## [b]Configuration:[/b][br]
 ## Set your interfaces directory in Project Settings:[br]
 ## Project → Project Settings → General → Application → Type Interfaces → Interfaces Directory[br]
-## Or set it directly: [code]ProjectSettings.set_setting("application/godot-addon-dictionary-type-interfaces/
+## Or set it directly: [code]ProjectSettings.set_setting("application/
+## godot-addon-dictionary-type-interfaces/
 ## interfaces_directory", "res://your/path/")[/code]
 
 ## Default interfaces directory - can be overridden via project settings or method parameters
