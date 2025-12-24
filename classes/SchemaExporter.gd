@@ -4,6 +4,7 @@ class_name SchemaExporter
 extends RefCounted
 
 # Directory for schema viewer JSON files
+# gdlint: disable=max-line-length
 const VIEWER_SCHEMAS_DIR = "res://addons/godot-addon-dictionary-type-interfaces/schema_viewer/schemas/"
 
 # Load the utility class once at compile time - uses relative path to work in CI
@@ -673,6 +674,7 @@ static func _generate_schemas_js_file(
 	js_content += "\n  ]\n"
 	js_content += "};\n"
 
+	# gdlint: disable=max-line-length
 	var output_path = "res://addons/godot-addon-dictionary-type-interfaces/schema_viewer/app/schemas.js"
 	var success = _write_text_to_file(output_path, js_content)
 
