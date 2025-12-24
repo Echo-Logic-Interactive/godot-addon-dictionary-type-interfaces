@@ -270,7 +270,7 @@ static func get_schema_info(interface_name: String, interfaces_dir: String = "")
 
 ## Get a list of all available interfaces
 ## [br]
-## Dynamically scans the interfaces directory to find all interface classes.
+## Dynamically scans the interfaces directory recursively to find all interface classes.
 ## [br][br]
 ## [param interfaces_dir]: Optional custom interfaces directory (uses project settings if omitted)
 ## [br]
@@ -279,30 +279,45 @@ static func get_available_interfaces(interfaces_dir: String = "") -> Array[Strin
 	var dir_path = interfaces_dir if interfaces_dir else default_interface_dir
 	var interface_classes: Array[String] = []
 
+	_scan_interfaces_recursive(dir_path, interface_classes)
+
+	interface_classes.sort()
+	return interface_classes
+
+
+## Recursively scan directory for interface files
+## [br][br]
+## [param dir_path]: Directory path to scan[br]
+## [param interfaces]: Array to append found interface names to
+static func _scan_interfaces_recursive(dir_path: String, interfaces: Array[String]) -> void:
 	var dir = DirAccess.open(dir_path)
 	if not dir:
-		push_warning("[SchemaExporter] Failed to open interfaces directory: %s" % dir_path)
-		return interface_classes
+		push_warning("[SchemaExporter] Failed to open directory: %s" % dir_path)
+		return
 
 	dir.list_dir_begin()
 	var file_name = dir.get_next()
 
 	while file_name != "":
-		# Only process .gd files, skip directories
-		if not dir.current_is_dir() and file_name.ends_with(".gd"):
-			var raw_class_name = file_name.get_basename()
-			# Only include interfaces (files starting with 'I' prefix)
-			# ExtendableInterface is now in the addon, not here
-			if raw_class_name.begins_with("I"):
-				if raw_class_name not in interface_classes:
-					interface_classes.append(raw_class_name)
+		# Skip hidden files and directories
+		if file_name.begins_with("."):
+			file_name = dir.get_next()
+			continue
+
+		var full_path = dir_path.path_join(file_name)
+
+		# If it's a directory, scan it recursively
+		if dir.current_is_dir():
+			_scan_interfaces_recursive(full_path, interfaces)
+		# If it's a .gd file starting with "I", it's an interface
+		elif file_name.ends_with(".gd") and file_name.begins_with("I"):
+			var class_name = file_name.get_basename()
+			if class_name not in interfaces:
+				interfaces.append(class_name)
 
 		file_name = dir.get_next()
 
 	dir.list_dir_end()
-	interface_classes.sort()
-
-	return interface_classes
 
 
 ## Parse type string into detailed type information
