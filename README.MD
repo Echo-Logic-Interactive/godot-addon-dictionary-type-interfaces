@@ -268,46 +268,23 @@ var stats = player.get_value("custom_stats") as ICustomStats
 print(stats.strength)  # 10.0
 ```
 
-### Dynamic Dictionaries (Collections)
+### Typed Collections
 
-For dictionaries with **dynamic keys** but **typed values**, use TYPE\_\* constants:
-
-```gdscript
-class_name ILoadedChunks
-extends TypedDict
-
-## Dictionary with string keys, values validated against IWorldChunkData
-func _get_schema() -> Dictionary:
-	return {TYPE_STRING: "IWorldChunkData"}
-
-# Usage:
-var chunks = ILoadedChunks.new({
-	"chunk_0_0": {"position": Vector2(0, 0), "tiles": []},
-	"chunk_1_0": {"position": Vector2(1, 0), "tiles": []},
-})
-# Each value is validated against IWorldChunkData schema
-```
-
-**Supported dynamic patterns:**
-
-| Pattern                      | Description                   | Example Use Case          |
-| ---------------------------- | ----------------------------- | ------------------------- |
-| `{TYPE_STRING: "Interface"}` | String keys, interface values | Chunk storage, registries |
-| `{TYPE_STRING: TYPE_INT}`    | String keys, int values       | Simple lookup tables      |
-| `{TYPE_INT: "Interface"}`    | Int keys, interface values    | Indexed collections       |
-| `{TYPE_INT: TYPE_FLOAT}`     | Int keys, float values        | Numeric arrays            |
-
-**Important:** You **must** use `TYPE_*` constants (like `TYPE_STRING`, `TYPE_INT`), **not** the type names (`String`, `int`). This is a GDScript limitation where builtin type names cannot be used as dictionary keys.
+For collections with typed values, use Godot's native typed container syntax:
 
 ```gdscript
-# ❌ WRONG - Syntax error
-func _get_schema() -> Dictionary:
-	return {String: "IWorldChunkData"}  # "Builtin type cannot be used as a name"
+# Typed dictionary - keys are strings, values are IWorldChunkData
+var loaded_chunks: Dictionary[String, IWorldChunkData] = {}
 
-# ✅ CORRECT - Use TYPE_STRING constant
-func _get_schema() -> Dictionary:
-	return {TYPE_STRING: "IWorldChunkData"}
+# Typed array of interfaces
+var inventory_items: Array[IItem] = []
+
+# Use standard Godot syntax for type safety
+loaded_chunks["chunk_0_0"] = IWorldChunkData.new({"position": Vector2(0, 0)})
+inventory_items.append(IItem.new({"id": "sword_01", "name": "Iron Sword"}))
 ```
+
+**Why not wrap collections?** Godot 4.x already provides excellent type safety for collections with `Dictionary[K, V]` and `Array[T]` syntax. This addon focuses on what Godot doesn't provide: **reusable interface contracts** and **mod-friendly data structures**.
 
 ---
 

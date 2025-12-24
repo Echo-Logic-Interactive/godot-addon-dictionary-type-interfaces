@@ -276,6 +276,7 @@ func _is_interface_type(type_string: String) -> bool:
 		return false
 
 	# Try to verify the interface file exists
+	# JJDEV: There are hard coded paths still that need replacing with dynamic ref
 	var script_path = "res://scripts/interfaces/%s.gd" % type_string
 	return FileAccess.file_exists(script_path)
 
