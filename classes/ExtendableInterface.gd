@@ -22,9 +22,13 @@ extends TypedDict
 ##
 ## @tutorial(Modding Guide): res://docs/MODDING_API.md
 
+var GetInterfacesDir = preload(
+	"res://addons/godot-addon-dictionary-type-interfaces/src/utils/get_interfaces_dir.gd"
+)
+var default_interface_dir: String = GetInterfacesDir.get_interfaces_directory()
+
 ## Dictionary of additional schema fields registered by mods or extensions
 var _extended_schema: Dictionary = {}
-
 ## Validation mode for this interface instance
 var _validation_mode: TypeInterfaces.ValidationMode = TypeInterfaces.ValidationMode.LOOSE
 
@@ -57,6 +61,7 @@ func _init(
 func _get_schema() -> Dictionary:
 	var base_schema = _get_base_schema()
 	base_schema.merge(_extended_schema)
+
 	return base_schema
 
 
@@ -168,6 +173,7 @@ func set_mod_data(mod_id: String, key: String, value) -> void:
 ## [/codeblock]
 func get_mod_data(mod_id: String, key: String, default = null):
 	var mod_data = _data.get("_mod_data", {}) as Dictionary
+
 	return mod_data.get(mod_id, {}).get(key, default)
 
 
@@ -176,6 +182,7 @@ func get_mod_data(mod_id: String, key: String, default = null):
 ## [param mod_id]: Unique identifier for the mod
 func has_mod_data(mod_id: String) -> bool:
 	var mod_data = _data.get("_mod_data", {}) as Dictionary
+
 	return mod_data.has(mod_id)
 
 
@@ -185,7 +192,38 @@ func has_mod_data(mod_id: String) -> bool:
 ## Returns a Dictionary of all key-value pairs stored by that mod
 func get_all_mod_data(mod_id: String) -> Dictionary:
 	var mod_data = _data.get("_mod_data", {}) as Dictionary
+
 	return mod_data.get(mod_id, {}).duplicate()
+
+
+## Get a value with type safety and automatic Vector conversion
+## Overrides TypedDict to ensure Vector conversion works with extended schemas
+func get_value(key: String, default_value = null):
+	if _data.has(key):
+		var value = _data[key]
+		var schema = _get_schema()
+		var expected_type = schema.get(key, "")
+
+		# Auto-convert dictionaries to Vector types (handles JSON deserialization)
+		if (
+			value is Dictionary
+			and (
+				expected_type
+				in ["Vector2i", "Vector2", "Vector3i", "Vector3", "Vector4", "Vector4i", "Color"]
+			)
+		):
+			return _dict_to_vector(value, expected_type)
+
+		# Auto-wrap dictionaries in interface classes
+		if value is Dictionary and _is_interface_type(expected_type):
+			return _wrap_in_interface(value, expected_type)
+
+		# Auto-wrap arrays of dictionaries in interface classes
+		if value is Array and _is_array_of_interfaces(expected_type):
+			return _wrap_array_in_interfaces(value, expected_type)
+
+		return value
+	return default_value
 
 
 ## Clear all data for a specific mod
@@ -203,6 +241,7 @@ func get_registered_mods() -> Array[String]:
 	var result: Array[String] = []
 	for mod_id in mod_data.keys():
 		result.append(mod_id)
+
 	return result
 
 
@@ -275,9 +314,8 @@ func _is_interface_type(type_string: String) -> bool:
 	if not type_string.begins_with("I"):
 		return false
 
-	# Try to verify the interface file exists
-	# JJDEV: There are hard coded paths still that need replacing with dynamic ref
-	var script_path = "res://scripts/interfaces/%s.gd" % type_string
+	var script_path = "res://" + default_interface_dir + "/%s.gd" % type_string
+
 	return FileAccess.file_exists(script_path)
 
 
@@ -288,7 +326,7 @@ func _is_interface_type(type_string: String) -> bool:
 ## [br]
 ## Returns an instance of the interface, or null if conversion fails
 func _convert_to_interface(interface_name: String, data: Dictionary):
-	var script_path = "res://scripts/interfaces/%s.gd" % interface_name
+	var script_path = "res://" + default_interface_dir + "/%s.gd" % interface_name
 
 	if not FileAccess.file_exists(script_path):
 		push_error("[ExtendableInterface] Interface class not found: %s" % interface_name)
@@ -301,6 +339,7 @@ func _convert_to_interface(interface_name: String, data: Dictionary):
 
 	# Create instance with same validation mode as parent
 	var instance = interface_script.new(data, _validation_mode)
+
 	return instance
 
 

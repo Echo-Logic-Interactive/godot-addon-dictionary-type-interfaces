@@ -7,10 +7,8 @@ extends RefCounted
 # gdlint: disable=max-line-length
 const VIEWER_SCHEMAS_DIR = "res://addons/godot-addon-dictionary-type-interfaces/schema_viewer/schemas/"
 
-# Load the utility class once at compile time - uses relative path to work in CI
-static var GetInterfacesDir = load(
-	"addons/godot-addon-dictionary-type-interfaces/src/utils/get_interfaces_dir.gd"
-)
+# Load the utility class to get interfaces directory
+static var GetInterfacesDir = preload("../src/utils/get_interfaces_dir.gd")
 
 # Call it to get the default directory
 static var default_interface_dir: String = GetInterfacesDir.get_interfaces_directory()
@@ -68,20 +66,35 @@ static func export_all_to_viewer(interfaces_dir: String = "", include_classes: b
 			return false
 
 	var interface_classes = get_available_interfaces(dir)
+	print(
+		(
+			"[SchemaExporter] DEBUG: Found %d interfaces: %s"
+			% [interface_classes.size(), interface_classes]
+		)
+	)
 	var success = true
 	var total_count = 0
 
 	# Export interfaces
 	for interface_name in interface_classes:
+		print("[SchemaExporter] DEBUG: Attempting to export interface: %s" % interface_name)
 		if not export_to_viewer(interface_name, dir):
 			success = false
+			print("[SchemaExporter] DEBUG: Failed to export interface: %s" % interface_name)
 		else:
 			total_count += 1
+			print("[SchemaExporter] DEBUG: Successfully exported interface: %s" % interface_name)
 
 	# Export regular classes if requested
 	var regular_classes: Array[String] = []
 	if include_classes:
 		regular_classes = get_available_classes()
+		print(
+			(
+				"[SchemaExporter] DEBUG: Found %d classes: %s"
+				% [regular_classes.size(), regular_classes]
+			)
+		)
 		for class_name_str in regular_classes:
 			if not export_class_to_viewer(class_name_str):
 				success = false
@@ -311,9 +324,9 @@ static func _scan_interfaces_recursive(dir_path: String, interfaces: Array[Strin
 			_scan_interfaces_recursive(full_path, interfaces)
 		# If it's a .gd file starting with "I", it's an interface
 		elif file_name.ends_with(".gd") and file_name.begins_with("I"):
-			var class_name = file_name.get_basename()
-			if class_name not in interfaces:
-				interfaces.append(class_name)
+			var class_name_str = file_name.get_basename()
+			if class_name_str not in interfaces:
+				interfaces.append(class_name_str)
 
 		file_name = dir.get_next()
 
@@ -371,8 +384,8 @@ static func _is_interface_type(type_string_value: String, interfaces_dir: String
 		return false
 
 	var dir_path = interfaces_dir if interfaces_dir else default_interface_dir
-	var script_path = dir_path + "%s.gd" % type_string_value
-	return FileAccess.file_exists(script_path)
+	var script_path = _find_interface_script_path(type_string_value, dir_path)
+	return script_path != ""
 
 
 ## Create an instance of an interface for schema extraction
@@ -385,10 +398,15 @@ static func _is_interface_type(type_string_value: String, interfaces_dir: String
 ## Returns an instance of the interface, or null if creation fails
 static func _create_interface_instance(interface_name: String, interfaces_dir: String):
 	var dir_path = interfaces_dir if interfaces_dir else default_interface_dir
-	var script_path = dir_path + "%s.gd" % interface_name
+	var script_path = _find_interface_script_path(interface_name, dir_path)
 
-	if not ResourceLoader.exists(script_path):
-		push_error("[SchemaExporter] Interface script not found: %s" % script_path)
+	if script_path.is_empty() or not ResourceLoader.exists(script_path):
+		push_error(
+			(
+				"[SchemaExporter] Interface script not found: %s (searched in %s)"
+				% [interface_name, dir_path]
+			)
+		)
 		return null
 
 	var script = load(script_path)
@@ -396,12 +414,25 @@ static func _create_interface_instance(interface_name: String, interfaces_dir: S
 		push_error("[SchemaExporter] Failed to load interface script: %s" % script_path)
 		return null
 
-	# Create an instance of the loaded script with empty data
-	# Try different constructor signatures to handle both TypedDict and ExtendableInterface
-	var instance = null
+	# Create dummy data based on the schema to avoid validation errors
+	# First, we need to peek at the schema without validation
+	var temp_instance = script.new({})
 
-	# First try with just empty dict (for classes with custom _init)
-	instance = script.new({})
+	# Extract the schema to see what fields we need
+	var schema = {}
+	if temp_instance.has_method("_get_base_schema"):
+		schema = temp_instance._get_base_schema()
+	elif temp_instance.has_method("_get_schema"):
+		schema = temp_instance._get_schema()
+
+	# Create dummy data for all required fields
+	var dummy_data = {}
+	for field_name in schema.keys():
+		var type_str = schema[field_name]
+		dummy_data[field_name] = _create_dummy_value(type_str)
+
+	# Now create the actual instance with valid dummy data
+	var instance = script.new(dummy_data)
 
 	if not instance:
 		push_error("[SchemaExporter] Failed to create instance of %s" % interface_name)
@@ -423,10 +454,10 @@ static func _create_interface_instance(interface_name: String, interfaces_dir: S
 ## Looks for ## comments that appear after the extends statement.
 static func _get_class_description(interface_name: String, interfaces_dir: String) -> String:
 	var dir_path = interfaces_dir if interfaces_dir else default_interface_dir
-	var file_path = dir_path + "%s.gd" % interface_name
+	var file_path = _find_interface_script_path(interface_name, dir_path)
 
-	if not FileAccess.file_exists(file_path):
-		push_warning("[SchemaExporter] File not found: %s" % file_path)
+	if file_path.is_empty() or not FileAccess.file_exists(file_path):
+		push_warning("[SchemaExporter] File not found for %s in %s" % [interface_name, dir_path])
 		return ""
 
 	var file = FileAccess.open(file_path, FileAccess.READ)
@@ -641,6 +672,24 @@ static func _generate_schemas_js_file(
 		if not schema_info.is_empty():
 			schema_info["type"] = "interface"
 			schema_info["interface"] = interface_name
+
+			# Add file path information for web viewer
+			var script_path = _find_interface_script_path(interface_name, dir_to_use)
+			if not script_path.is_empty():
+				# Extract relative path from interfaces directory
+				var relative_path = (
+					script_path.replace(dir_to_use, "").trim_prefix("/").trim_prefix("\\")
+				)
+				schema_info["file_path"] = relative_path
+
+				# Extract subdirectory (if any)
+				var path_parts = relative_path.split("/")
+				if path_parts.size() > 1:
+					path_parts.remove_at(path_parts.size() - 1)  # Remove filename
+					schema_info["subdirectory"] = "/".join(path_parts)
+				else:
+					schema_info["subdirectory"] = ""
+
 			all_schemas.append(schema_info)
 			print("[SchemaExporter]   ✓ Added interface: ", interface_name)
 		else:
@@ -727,9 +776,20 @@ static func get_available_classes() -> Array[String]:
 	for class_entry in class_list:
 		if class_entry is Dictionary and class_entry.has("class"):
 			var class_name_str = class_entry["class"]
-			# Include all classes except interfaces (starting with I)
-			if not class_name_str.begins_with("I"):
-				classes.append(class_name_str)
+			var class_path = class_entry.get("path", "")
+
+			# Exclude interfaces:
+			# - Class name starts with I
+			# - OR file is in the interfaces directory
+			# - OR file extends ExtendableInterface/TypedDict
+			if (
+				class_name_str.begins_with("I")
+				or "/" + default_interface_dir + "/" in class_path
+				or "\\" + default_interface_dir + "\\" in class_path
+			):
+				continue
+
+			classes.append(class_name_str)
 
 	classes.sort()
 	return classes
@@ -854,6 +914,89 @@ static func _parse_class_file(script_path: String, class_name_str: String) -> Di
 		i += 1
 
 	return result
+
+
+## Recursively find the script path for an interface in subdirectories
+## [br][br]
+## [param interface_name]: Name of the interface (e.g., "IWorldEntity")[br]
+## [param base_dir]: Base directory to search from
+## [br]
+## Returns the full script path, or empty string if not found
+static func _find_interface_script_path(interface_name: String, base_dir: String) -> String:
+	var filename = "%s.gd" % interface_name
+	return _search_for_file_recursive(base_dir, filename)
+
+
+## Recursively search for a file in a directory tree
+static func _search_for_file_recursive(dir_path: String, filename: String) -> String:
+	var dir = DirAccess.open(dir_path)
+	if not dir:
+		return ""
+
+	dir.list_dir_begin()
+	var file_name = dir.get_next()
+
+	while file_name != "":
+		if file_name.begins_with("."):
+			file_name = dir.get_next()
+			continue
+
+		var full_path = dir_path.path_join(file_name)
+
+		if dir.current_is_dir():
+			# Search subdirectories
+			var result = _search_for_file_recursive(full_path, filename)
+			if not result.is_empty():
+				dir.list_dir_end()
+				return result
+		elif file_name == filename:
+			# Found it!
+			dir.list_dir_end()
+			return full_path
+
+		file_name = dir.get_next()
+
+	dir.list_dir_end()
+	return ""
+
+
+## Create a dummy value for a given type string (for schema extraction)
+static func _create_dummy_value(type_str: String) -> Variant:
+	# Handle nullable types
+	if type_str.ends_with("?"):
+		type_str = type_str.substr(0, type_str.length() - 1)
+
+	# Handle arrays
+	if type_str.begins_with("Array<") and type_str.ends_with(">"):
+		return []
+
+	# Handle basic types
+	match type_str:
+		"String":
+			return ""
+		"int":
+			return 0
+		"float":
+			return 0.0
+		"bool":
+			return false
+		"Vector2":
+			return Vector2.ZERO
+		"Vector2i":
+			return Vector2i.ZERO
+		"Vector3":
+			return Vector3.ZERO
+		"Vector4":
+			return Vector4.ZERO
+		"Color":
+			return Color.WHITE
+		"Dictionary":
+			return {}
+		"Array":
+			return []
+		_:
+			# For interface types or unknown types, use empty dict
+			return {}
 
 
 ## Extract variable information from a var declaration line

@@ -14,21 +14,21 @@ extends RefCounted
 
 ## Default interfaces directory - can be overridden via project settings or method parameters
 ## This must have a trailing slash
-const DEFAULT_INTERFACES_DIR := "res://interfaces/"
+const DEFAULT_INTERFACES_DIR: String = "res://interfaces/"
 
 
 ## Get the configured interfaces directory
 ## [br]
 ## Checks project settings first, falls back to default
 static func get_interfaces_directory() -> String:
-	var setting_value := DEFAULT_INTERFACES_DIR
-	var project_setting := "application/godot-addon-dictionary-type-interfaces/interfaces_directory"
-
-	if ProjectSettings.has_setting(project_setting):
-		setting_value = ProjectSettings.get_setting(project_setting)
+	var plugin_name: String = "godot-addon-dictionary-type-interfaces"
+	var project_setting: String = "application/" + plugin_name + "/interfaces_directory"
+	var setting_value = ProjectSettings.get_setting(project_setting, DEFAULT_INTERFACES_DIR)
 
 	# Ensure it ends with a slash
 	if not setting_value.ends_with("/"):
 		setting_value += "/"
+
+	print("[GetInterfacesDir] Using interfaces directory: %s" % setting_value)
 
 	return setting_value
