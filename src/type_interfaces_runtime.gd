@@ -13,7 +13,7 @@ enum ValidationMode {
 var GetInterfacesDir = preload("./utils/get_interfaces_dir.gd")
 
 ## Get the interfaces directory from project settings
-var interface_dir = GetInterfacesDir.get_interfaces_directory()
+var default_interface_dir = GetInterfacesDir.get_interfaces_directory()
 
 
 ## Validate a dictionary against an interface definition
@@ -113,6 +113,16 @@ func _check_type(value: Variant, expected_type: String) -> bool:
 	elif value == null:
 		return false
 
+	# Special case: Dictionary can represent Vector types from JSON
+	if (
+		value is Dictionary
+		and (
+			expected_type
+			in ["Vector2i", "Vector2", "Vector3i", "Vector3", "Vector4", "Vector4i", "Color"]
+		)
+	):
+		return _is_valid_vector_dict(value, expected_type)
+
 	# Array types (Array<Type>)
 	if expected_type.begins_with("Array<") and expected_type.ends_with(">"):
 		if typeof(value) != TYPE_ARRAY:
@@ -120,6 +130,9 @@ func _check_type(value: Variant, expected_type: String) -> bool:
 
 		var element_type = expected_type.substr(6, expected_type.length() - 7)
 		for item in value:
+			# Allow dictionaries when expecting interface types (they'll be converted by get_value)
+			if _is_interface_type(element_type) and item is Dictionary:
+				continue
 			if not _check_type(item, element_type):
 				return false
 		return true
@@ -129,7 +142,10 @@ func _check_type(value: Variant, expected_type: String) -> bool:
 		return typeof(value) == TYPE_DICTIONARY
 
 	# Interface types (e.g., IPlayerData, ICustomStats)
+	# Allow dictionaries since they'll be wrapped in get_value()
 	if _is_interface_type(expected_type):
+		if value is Dictionary:
+			return true
 		return _is_interface_instance(value, expected_type)
 
 	# Basic type matching
@@ -137,6 +153,20 @@ func _check_type(value: Variant, expected_type: String) -> bool:
 
 	# gdlint: disable=max-returns
 	return type_name == expected_type or _is_compatible_type(type_name, expected_type)
+
+
+## Check if a dictionary is a valid representation of a vector type
+func _is_valid_vector_dict(dict: Dictionary, type: String) -> bool:
+	match type:
+		"Vector2i", "Vector2":
+			return dict.has("x") and dict.has("y")
+		"Vector3i", "Vector3":
+			return dict.has("x") and dict.has("y") and dict.has("z")
+		"Vector4", "Vector4i":
+			return dict.has("x") and dict.has("y") and dict.has("z") and dict.has("w")
+		"Color":
+			return dict.has("r") and dict.has("g") and dict.has("b")
+	return false
 
 
 ## Get the type name of a value
@@ -297,9 +327,43 @@ func _is_interface_type(type_string: String) -> bool:
 	if not type_string.begins_with("I"):
 		return false
 
-	# Verify the interface file exists
-	var script_path = interface_dir + "%s.gd" % type_string
-	return FileAccess.file_exists(script_path)
+	# Recursively search for the interface file
+	var filename = "%s.gd" % type_string
+	var script_path = _search_for_interface_recursive(default_interface_dir, filename)
+	return not script_path.is_empty()
+
+
+## Recursively search for an interface file in directory tree
+func _search_for_interface_recursive(dir_path: String, filename: String) -> String:
+	var dir = DirAccess.open(dir_path)
+	if not dir:
+		return ""
+
+	dir.list_dir_begin()
+	var file_name = dir.get_next()
+
+	while file_name != "":
+		if file_name.begins_with("."):
+			file_name = dir.get_next()
+			continue
+
+		var full_path = dir_path.path_join(file_name)
+
+		if dir.current_is_dir():
+			# Search subdirectories recursively
+			var result = _search_for_interface_recursive(full_path, filename)
+			if not result.is_empty():
+				dir.list_dir_end()
+				return result
+		elif file_name == filename:
+			# Found it!
+			dir.list_dir_end()
+			return full_path
+
+		file_name = dir.get_next()
+
+	dir.list_dir_end()
+	return ""
 
 
 ## Check if a value is an instance of a specific interface
