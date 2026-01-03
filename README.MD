@@ -14,10 +14,10 @@
 - [Features](#-features)
 - [Installation](#-installation)
 - [Quick Start](#-quick-start)
-- [What is TypedDict?](#-why-typeddict)
+- [What is TypedDict?](#-what-is-typeddict)
 - [Core Concepts](#-core-concepts)
 - [Creating Interfaces](#-creating-interfaces)
-- [Schema Exporter/Viewer](#-schema-exporter)
+- [Schema Exporter/Viewer](#-schema-exporterviewer)
 - [Usage Patterns](#-usage-patterns)
 - [Extending for Mods](#-extending-for-mods)
 - [Performance](#-performance)
@@ -948,4 +948,5 @@ This project is licensed under the MIT License.
 ---
 
 <p align="center">Made with ❤️ for the Godot community</p>
+
 
