@@ -28,14 +28,14 @@
 
 ## ✨ Features
 
-✅ **Runtime Type Validation** - Catch data structure errors before they cause crashes
-✅ **ORM-Style Data Objects** - Define schemas as classes, create validated instances
-✅ **IDE Autocomplete** - Full IntelliSense support with typed properties
-✅ **Simple Inheritance** - Extend `TypedDict` or `ExtendableInterface` base classes
-✅ **Flexible Validation** - Strict or loose modes for different use cases
-✅ **Dictionary Compatible** - Easy conversion to/from dictionaries for save/load
-✅ **Mod-Friendly** - Built-in `ExtendableInterface` for safe mod extensions
-✅ **Production Ready** - Validation uses `assert()` (auto-removed in release builds)
+✅ **Runtime Type Validation** - Catch data structure errors before they cause crashes<br>
+✅ **ORM-Style Data Objects** - Define schemas as classes, create validated instances<br>
+✅ **IDE Autocomplete** - Full IntelliSense support with typed properties<br>
+✅ **Simple Inheritance** - Extend `TypedDict` or `ExtendableInterface` base classes<br>
+✅ **Flexible Validation** - Strict or loose modes for different use cases<br>
+✅ **Dictionary Compatible** - Easy conversion to/from dictionaries for save/load<br>
+✅ **Mod-Friendly** - Built-in `ExtendableInterface` for safe mod extensions<br>
+✅ **Production Ready** - Validation uses `assert()` (auto-removed in release builds)<br>
 
 ---
 
@@ -553,3 +553,392 @@ print(player.level)  # ✅ Fast
 
 # Validation runs here (in debug builds
 ```
+
+### Debug vs Release Builds
+
+| Build Type | Validation Behavior |
+|-----------|-------------------|
+| **Debug** (Editor) | ✅ Full validation with asserts |
+| **Release** (Exported) | ❌ Asserts removed, no validation |
+
+**This is automatic** - Godot strips `assert()` from release builds for you.
+
+### Custom Validation Control
+
+If you want **manual control** over validation:
+
+**Option 1: Conditional Validation**
+```gdscript
+class_name IPlayerData
+extends TypedDict
+
+func _init(initial_data: Dictionary = {}) -> void:
+    var schema = _get_schema()
+    
+    # Only validate in debug mode
+    if OS.is_debug_build():
+        assert(TypeInterfaces.validate(initial_data, schema), "Validation failed")
+    
+    _data = initial_data.duplicate()
+```
+
+**Option 2: Always Validate (Even in Release)**
+```gdscript
+class_name ICriticalData
+extends TypedDict
+
+func _init(initial_data: Dictionary = {}) -> void:
+    var schema = _get_schema()
+    
+    # Validate in all builds
+    if not TypeInterfaces.validate(initial_data, schema):
+        push_error("Critical data validation failed!")
+        # Handle error appropriately
+    
+    _data = initial_data.duplicate()
+```
+
+**Option 3: Never Validate (Maximum Performance)**
+```gdscript
+class_name IUnsafeData
+extends RefCounted  # Don't extend TypedDict
+
+var _data: Dictionary
+
+func _init(initial_data: Dictionary = {}) -> void:
+    _data = initial_data.duplicate()  # No validation at all
+```
+
+### Performance Tips
+
+✅ **Use typed properties** - Faster than `get_value()` calls  <br>
+✅ **Cache instances** - Don't recreate validated objects  <br>
+✅ **Validate once** - Create validated objects, then pass references  <br>
+✅ **Batch operations** - Use `to_dict()` for bulk modifications  <br>
+❌ **Don't validate in loops** - Create objects outside hot paths  <br>
+
+---
+
+## 📚 API Reference
+
+### TypedDict Base Class
+
+```gdscript
+class_name TypedDict
+extends RefCounted
+```
+
+#### Constructor
+
+```gdscript
+func _init(initial_data: Dictionary = {}) -> void
+```
+
+Creates a new TypedDict instance with validation.
+
+**Parameters:**
+- `initial_data` - Dictionary to populate the instance
+
+**Validation:** Uses `assert()` - only runs in debug builds
+
+---
+
+#### Methods
+
+```gdscript
+func _get_schema() -> Dictionary
+```
+
+**Override this method** to define your data structure.
+
+**Returns:** Dictionary mapping field names to type strings
+
+**Example:**
+```gdscript
+func _get_schema() -> Dictionary:
+    return {
+        "name": "String",
+        "level": "int",
+        "health": "float",
+        "position": Vector2
+    }
+```
+
+---
+
+```gdscript
+func to_dict() -> Dictionary
+```
+
+Convert to a plain dictionary (shallow copy).
+
+**Returns:** Dictionary containing all field data
+
+**Example:**
+```gdscript
+var player = IPlayerData.new({...})
+var save_data = player.to_dict()
+```
+
+---
+
+```gdscript
+func get_value(key: String, default = null) -> Variant
+```
+
+Safely retrieve a field value.
+
+**Parameters:**
+- `key` - Field name
+- `default` - Value to return if key doesn't exist
+
+**Returns:** Field value or default
+
+---
+
+```gdscript
+func set_value(key: String, value: Variant) -> void
+```
+
+Set a field value with validation (debug builds only).
+
+**Parameters:**
+- `key` - Field name
+- `value` - New value
+
+---
+
+```gdscript
+func has_key(key: String) -> bool
+```
+
+Check if a field exists.
+
+---
+
+```gdscript
+func keys() -> Array
+```
+
+Get all field names.
+
+---
+
+```gdscript
+func values() -> Array
+```
+
+Get all field values.
+
+---
+
+### ExtendableInterface
+
+```gdscript
+class_name ExtendableInterface
+extends TypedDict
+```
+
+Designed for mod support. Provides the same API as TypedDict with additional schema merging capabilities.
+
+**Use when:** Your data structures might be extended by mods
+
+---
+
+### TypeInterfaces Singleton
+
+```gdscript
+# Global singleton - available everywhere
+TypeInterfaces
+```
+
+#### Methods
+
+```gdscript
+func validate(data: Dictionary, schema: Dictionary, strict: bool = false) -> bool
+```
+
+Manually validate a dictionary against a schema.
+
+**Parameters:**
+- `data` - Dictionary to validate
+- `schema` - Schema definition (same format as `_get_schema()`)
+- `strict` - If `true`, rejects extra fields not in schema
+
+**Returns:** `true` if valid, `false` otherwise
+
+**Example:**
+```gdscript
+var schema = {"name": "String", "level": "int"}
+var data = {"name": "Hero", "level": 5}
+
+if TypeInterfaces.validate(data, schema):
+    print("Valid!")
+```
+
+---
+
+## 📖 Examples
+
+### Example 1: Simple Item System
+
+```gdscript
+# Define the interface
+class_name IItem
+extends TypedDict
+
+func _get_schema() -> Dictionary:
+    return {
+        "id": "String",
+        "name": "String",
+        "description": "String",
+        "quantity": "int",
+        "value": "int",
+        "weight": "float"
+    }
+
+var id: String:
+    get: return get_value("id", "")
+    set(value): set_value("id", value)
+
+var name: String:
+    get: return get_value("name", "Unknown Item")
+    set(value): set_value("name", value)
+
+var quantity: int:
+    get: return get_value("quantity", 1)
+    set(value): set_value("quantity", value)
+
+# Usage
+var sword = IItem.new({
+    "id": "iron_sword",
+    "name": "Iron Sword",
+    "description": "A basic iron sword",
+    "quantity": 1,
+    "value": 50,
+    "weight": 3.5
+})
+
+sword.quantity += 1  # Type-safe modification
+print("You have ", sword.quantity, " ", sword.name)
+```
+
+### Example 2: Save/Load System
+
+```gdscript
+class_name SaveManager
+
+const SAVE_PATH = "user://savegame.json"
+
+func save_game(player: IPlayerData) -> bool:
+    var save_data = {
+        "version": "1.0.0",
+        "player": player.to_dict(),
+        "timestamp": Time.get_unix_time_from_system()
+    }
+    
+    var file = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+    if not file:
+        push_error("Failed to open save file")
+        return false
+    
+    file.store_string(JSON.stringify(save_data, "\t"))
+    file.close()
+    return true
+
+func load_game() -> IPlayerData:
+    if not FileAccess.file_exists(SAVE_PATH):
+        return null
+    
+    var file = FileAccess.open(SAVE_PATH, FileAccess.READ)
+    var json_string = file.get_as_text()
+    file.close()
+    
+    var save_data = JSON.parse_string(json_string)
+    if not save_data:
+        push_error("Failed to parse save file")
+        return null
+    
+    # Automatically validates on creation
+    return IPlayerData.new(save_data["player"])
+```
+
+### Example 3: Inventory System
+
+```gdscript
+class_name Inventory
+
+var _items: Array[IItem] = []
+var _max_weight: float = 50.0
+
+func add_item(item: IItem) -> bool:
+    # Check weight limit
+    var total_weight = get_total_weight()
+    if total_weight + item.weight > _max_weight:
+        return false
+    
+    # Stack with existing items
+    for existing in _items:
+        if existing.id == item.id:
+            existing.quantity += item.quantity
+            return true
+    
+    _items.append(item)
+    return true
+
+func remove_item(item_id: String, amount: int = 1) -> IItem:
+    for item in _items:
+        if item.id == item_id and item.quantity >= amount:
+            item.quantity -= amount
+            
+            if item.quantity == 0:
+                _items.erase(item)
+            
+            # Return what was removed
+            var removed = IItem.new(item.to_dict())
+            removed.quantity = amount
+            return removed
+    
+    return null
+
+func get_total_weight() -> float:
+    var total = 0.0
+    for item in _items:
+        total += item.weight * item.quantity
+    return total
+
+func get_total_value() -> int:
+    var total = 0
+    for item in _items:
+        total += item.value * item.quantity
+    return total
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! To contribute:
+
+1. Fork the repository<br>
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)<br>
+3. Commit your changes (`git commit -m 'Add amazing feature'`)<br>
+4. Push to the branch (`git push origin feature/amazing-feature`)<br>
+5. Open a Pull Request<br>
+
+### Development Guidelines
+
+- Maintain backward compatibility<br>
+- Add tests for new features<br>
+- Update documentation<br>
+- Follow GDScript style guide<br>
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+---
+
+<p align="center">Made with ❤️ for the Godot community</p>
