@@ -1,3 +1,4 @@
+# gdlint: disable=max-file-lines
 @tool
 class_name SchemaExporter
 
@@ -1033,3 +1034,4 @@ static func _extract_var_info(var_line: String, is_export: bool) -> Dictionary:
 			info["name"] = line_no_comment.strip_edges()
 
 	return info
+
