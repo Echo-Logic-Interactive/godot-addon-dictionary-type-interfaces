@@ -1035,5 +1035,3 @@ static func _extract_var_info(var_line: String, is_export: bool) -> Dictionary:
 	return info
 
 # gdlint: disable=max-file-lines
-
-
