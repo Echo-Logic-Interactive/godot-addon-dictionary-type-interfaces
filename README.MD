@@ -1,4 +1,4 @@
-# 🎯 TypedDict - Type-Safe Data Objects for Godot
+# 🎯 Dictionary Type Interfaces for Godot
 
 [![Godot](https://img.shields.io/badge/Godot-4.0+-blue.svg)](https://godotengine.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -891,3 +891,4 @@ This project is licensed under the MIT License.
 ---
 
 <p align="center">Made with ❤️ for Godot developers</p>
+
