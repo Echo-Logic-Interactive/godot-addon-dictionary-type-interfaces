@@ -12,11 +12,12 @@
 ## 📋 Table of Contents
 
 - [Features](#-features)
-- [Why TypedDict?](#-why-typeddict)
 - [Installation](#-installation)
 - [Quick Start](#-quick-start)
+- [What is TypedDict?](#-why-typeddict)
 - [Core Concepts](#-core-concepts)
 - [Creating Interfaces](#-creating-interfaces)
+- [Schema Exporter/Viewer](#-schema-exporter)
 - [Usage Patterns](#-usage-patterns)
 - [Extending for Mods](#-extending-for-mods)
 - [Performance](#-performance)
@@ -36,35 +37,6 @@
 ✅ **Dictionary Compatible** - Easy conversion to/from dictionaries for save/load<br>
 ✅ **Mod-Friendly** - Built-in `ExtendableInterface` for safe mod extensions<br>
 ✅ **Production Ready** - Validation uses `assert()` (auto-removed in release builds)<br>
-
----
-
-## 🤔 Why TypedDict?
-
-### The Problem
-
-```gdscript
-# Traditional untyped dictionaries are error-prone
-var player_data = {
-    "name": "Hero",
-    "lvl": 5,  # Typo! Should be "level"
-    "health": "100"  # Wrong type! Should be float
-}
-
-# This fails at runtime... somewhere... maybe?
-save_game(player_data)
-```
-
-### The Solution
-
-```gdscript
-# TypedDict catches errors immediately
-var player = IPlayerData.new({
-    "name": "Hero",
-    "lvl": 5,  # ❌ Assert fails! Missing "level" field
-    "health": "100"  # ❌ Assert fails! Type mismatch
-})
-```
 
 ---
 
@@ -184,6 +156,34 @@ func load_game() -> IPlayerData:
     var json = JSON.parse_string(file.get_as_text())
     return IPlayerData.new(json)
 ```
+---
+
+## 🤔 What is TypedDict?
+
+### The Problem
+
+```gdscript
+# Traditional untyped dictionaries are error-prone
+var player_data = {
+    "name": "Hero",
+    "lvl": 5,  # Typo! Should be "level"
+    "health": "100"  # Wrong type! Should be float
+}
+
+# This fails at runtime... somewhere... maybe?
+save_game(player_data)
+```
+
+### The Solution
+
+```gdscript
+# TypedDict catches errors immediately
+var player = IPlayerData.new({
+    "name": "Hero",
+    "lvl": 5,  # ❌ Assert fails! Missing "level" field
+    "health": "100"  # ❌ Assert fails! Type mismatch
+})
+```
 
 ---
 
@@ -250,6 +250,12 @@ func _get_schema() -> Dictionary:
         "optional_field": "String?"  # Can be null
     }
 ```
+
+---
+
+## 💡 Schema Exporter/Viewer
+
+### Awaiting details and examples
 
 ---
 
@@ -942,3 +948,4 @@ This project is licensed under the MIT License.
 ---
 
 <p align="center">Made with ❤️ for the Godot community</p>
+
