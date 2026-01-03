@@ -23,20 +23,19 @@
 - [API Reference](#-api-reference)
 - [Examples](#-examples)
 - [Contributing](#-contributing)
-- [License](#-license)
 
 ---
 
 ## ✨ Features
 
-✅ **Runtime Type Validation** - Catch data structure errors before they cause crashes<br>
-✅ **ORM-Style Data Objects** - Define schemas as classes, create validated instances<br>
-✅ **IDE Autocomplete** - Full IntelliSense support with typed properties<br>
-✅ **Zero Boilerplate** - Simple inheritance pattern, no manual validation calls<br>
-✅ **Flexible Validation** - Strict or loose modes for different use cases<br>
-✅ **Dictionary Compatible** - Easy conversion to/from dictionaries for save/load<br>
-✅ **Mod-Friendly** - Extend and override interfaces for custom content<br>
-✅ **Production Ready** - Validation can be stripped in release builds<br>
+✅ **Runtime Type Validation** - Catch data structure errors before they cause crashes
+✅ **ORM-Style Data Objects** - Define schemas as classes, create validated instances
+✅ **IDE Autocomplete** - Full IntelliSense support with typed properties
+✅ **Simple Inheritance** - Extend `TypedDict` or `ExtendableInterface` base classes
+✅ **Flexible Validation** - Strict or loose modes for different use cases
+✅ **Dictionary Compatible** - Easy conversion to/from dictionaries for save/load
+✅ **Mod-Friendly** - Built-in `ExtendableInterface` for safe mod extensions
+✅ **Production Ready** - Validation uses `assert()` (auto-removed in release builds)
 
 ---
 
@@ -62,8 +61,8 @@ save_game(player_data)
 # TypedDict catches errors immediately
 var player = IPlayerData.new({
     "name": "Hero",
-    "lvl": 5,  # ❌ Validation fails! Missing "level" field
-    "health": "100"  # ❌ Type mismatch! Expected float
+    "lvl": 5,  # ❌ Assert fails! Missing "level" field
+    "health": "100"  # ❌ Assert fails! Type mismatch
 })
 ```
 
@@ -75,16 +74,12 @@ var player = IPlayerData.new({
 
 1. Download or clone this repository
 2. Copy the `addons/godot-addon-dictionary-type-interfaces` folder to your project's `addons/` directory
-3. Enable the plugin in **Project → Project Settings → Plugins → Dictionary Type Interfaces**
+3. Enable the plugin in **Project → Project Settings → Plugins**
 4. Restart Godot
-
-### Method 2: AssetLib (Coming Soon)
-
-Search for "TypedDict" or "Dictionary Type Interfaces" in Godot's AssetLib.
 
 ### Verify Installation
 
-The `TypeInterfaces` singleton should be available globally. Test it:
+The `TypeInterfaces` singleton should be available globally:
 
 ```gdscript
 func _ready():
@@ -95,24 +90,59 @@ func _ready():
 
 ## 🚀 Quick Start
 
-### 1. Define an Interface
+### 1. Choose Your Base Class
 
-Create a new script that extends `TypedDict`:
+TypedDict provides two base classes:
+
+| Base Class                | Use When                                          |
+| ------------------------- | ------------------------------------------------- |
+| **`TypedDict`**           | Simple data structures, no mod support needed     |
+| **`ExtendableInterface`** | Data that mods might extend (player, items, etc.) |
+
+### 2. Define an Interface
+
+**Option A: TypedDict (Simple)**
 
 ```gdscript
-# scripts/interfaces/player_interfaces.gd
-class_name IPlayerData
+# scripts/interfaces/item_data.gd
+class_name IItem
 extends TypedDict
+
+func _get_schema() -> Dictionary:
+    return {
+        "id": "String",
+        "name": "String",
+        "quantity": "int",
+        "value": "int"
+    }
+
+# Optional: Add typed properties
+var id: String:
+    get: return get_value("id", "")
+    set(value): set_value("id", value)
+
+var quantity: int:
+    get: return get_value("quantity", 1)
+    set(value): set_value("quantity", value)
+```
+
+**Option B: ExtendableInterface (Mod-Friendly)**
+
+```gdscript
+# scripts/interfaces/player_data.gd
+class_name IPlayerData
+extends ExtendableInterface
 
 func _get_schema() -> Dictionary:
     return {
         "name": "String",
         "level": "int",
         "health": "float",
-        "position": "Vector2"
+        "max_health": "float",
+        "position": Vector2
     }
 
-# Optional: Add typed properties for IDE support
+# Optional: Add typed properties
 var name: String:
     get: return get_value("name", "")
     set(value): set_value("name", value)
@@ -122,14 +152,15 @@ var level: int:
     set(value): set_value("level", value)
 ```
 
-### 2. Create Instances
+### 3. Create Instances
 
 ```gdscript
-# Create a validated player object
+# Create validated objects
 var player = IPlayerData.new({
     "name": "Hero",
     "level": 5,
     "health": 100.0,
+    "max_health": 100.0,
     "position": Vector2(50, 100)
 })
 
@@ -138,7 +169,7 @@ player.level += 1
 print("Player: ", player.name, " - Level: ", player.level)
 ```
 
-### 3. Convert to/from Dictionaries
+### 4. Save/Load with Dictionaries
 
 ```gdscript
 # Save to file
@@ -158,121 +189,127 @@ func load_game() -> IPlayerData:
 
 ## 🧠 Core Concepts
 
-### TypedDict Base Class
+### Base Classes
 
-All interfaces extend `TypedDict`, which provides:
+#### TypedDict
 
-- **`_get_schema()`** - Override to define your data structure
-- **`to_dict()`** - Convert to a plain dictionary
-- **`get_value(key, default)`** - Safe value access
-- **`set_value(key, value)`** - Validated value setting
-
-### Validation Happens Automatically
+Basic validated dictionary wrapper. Use for simple data structures.
 
 ```gdscript
-# On creation
-var player = IPlayerData.new({...})  # Validates immediately
-
-# On modification (if using set_value)
-player.set_value("level", 10)  # Validates before setting
+class ISimpleData extends TypedDict:
+    func _get_schema() -> Dictionary:
+        return {"field": "String"}
 ```
+
+#### ExtendableInterface
+
+Designed for mod support. Allows safe schema extension by mods.
+
+```gdscript
+class IModdableData extends ExtendableInterface:
+    func _get_schema() -> Dictionary:
+        return {"base_field": "String"}
+```
+
+**Key Difference:** `ExtendableInterface` provides additional helper methods for merging schemas safely when mods extend your interfaces.
+
+### Validation Behavior
+
+Validation uses **`assert()`** which has important characteristics:
+
+```gdscript
+# In debug builds (default when running from editor)
+var player = IPlayerData.new({})  # ❌ Assert fails! Missing fields
+
+# In release builds (when exported)
+var player = IPlayerData.new({})  # ⚠️ No validation! Assert is removed
+```
+
+**Important:** Godot automatically strips all `assert()` calls from release builds for performance.
 
 ### Schema Types
 
-Supported type strings in `_get_schema()`:
+| Type String    | GDScript Type | Example            | Nullable        |
+| -------------- | ------------- | ------------------ | --------------- |
+| `"String"`     | String        | `"hello"`          | `"String?"`     |
+| `"int"`        | int           | `42`               | `"int?"`        |
+| `"float"`      | float         | `3.14`             | `"float?"`      |
+| `"bool"`       | bool          | `true`             | `"bool?"`       |
+| `"Dictionary"` | Dictionary    | `{}`               | `"Dictionary?"` |
+| `"Array"`      | Array         | `[]`               | `"Array?"`      |
+| `Vector2`      | Vector2       | `Vector2(1, 2)`    | -               |
+| `Vector3`      | Vector3       | `Vector3(1, 2, 3)` | -               |
+| `Color`        | Color         | `Color.RED`        | -               |
 
-| Type String       | GDScript Type   | Example            |
-| ----------------- | --------------- | ------------------ |
-| `"String"`        | String          | `"hello"`          |
-| `"int"`           | int             | `42`               |
-| `"float"`         | float           | `3.14`             |
-| `"bool"`          | bool            | `true`             |
-| `"Dictionary"`    | Dictionary      | `{}`               |
-| `"Array"`         | Array           | `[]`               |
-| `"Array<String>"` | Typed Array     | `["a", "b"]`       |
-| `Vector2`         | Vector2         | `Vector2(1, 2)`    |
-| `Vector3`         | Vector3         | `Vector3(1, 2, 3)` |
-| `Color`           | Color           | `Color.RED`        |
-| `"String?"`       | Nullable String | `null` or `"text"` |
+**Nullable Example:**
+
+```gdscript
+func _get_schema() -> Dictionary:
+    return {
+        "required_field": "String",
+        "optional_field": "String?"  # Can be null
+    }
+```
 
 ---
 
 ## 🏗️ Creating Interfaces
 
-### Basic Interface
+### Basic Interface (TypedDict)
 
 ```gdscript
-class_name IItem
+class_name IWeatherData
 extends TypedDict
 
 func _get_schema() -> Dictionary:
     return {
-        "id": "String",
-        "name": "String",
-        "quantity": "int",
-        "value": "int"
+        "condition": "String",
+        "temperature": "float",
+        "wind_speed": "float",
+        "precipitation": "float"
     }
 ```
 
 ### Interface with Typed Properties
 
 ```gdscript
-class_name IItem
+class_name IWeatherData
 extends TypedDict
 
 func _get_schema() -> Dictionary:
     return {
-        "id": "String",
-        "name": "String",
-        "quantity": "int",
-        "value": "int"
+        "condition": "String",
+        "temperature": "float",
+        "wind_speed": "float"
     }
 
-var id: String:
-    get: return get_value("id", "")
-    set(value): set_value("id", value)
+var condition: String:
+    get: return get_value("condition", "clear")
+    set(value): set_value("condition", value)
 
-var name: String:
-    get: return get_value("name", "")
-    set(value): set_value("name", value)
+var temperature: float:
+    get: return get_value("temperature", 20.0)
+    set(value): set_value("temperature", value)
 
-var quantity: int:
-    get: return get_value("quantity", 1)
-    set(value): set_value("quantity", value)
-
-var value: int:
-    get: return get_value("value", 0)
-    set(value): set_value("value", value)
+var wind_speed: float:
+    get: return get_value("wind_speed", 0.0)
+    set(value): set_value("wind_speed", value)
 ```
 
-### Grouping Related Interfaces (Recommended)
+### Mod-Friendly Interface (ExtendableInterface)
 
 ```gdscript
-# scripts/interfaces/player_interfaces.gd
-# Groups player and inventory data structures
-
 class_name IPlayerData
-extends TypedDict
+extends ExtendableInterface
 
 func _get_schema() -> Dictionary:
     return {
         "name": "String",
         "level": "int",
         "health": "float",
-        "position": "Vector2"
-    }
-
-# Add typed properties...
-
-
-class_name IItem
-extends TypedDict
-
-func _get_schema() -> Dictionary:
-    return {
-        "id": "String",
-        "name": "String",
-        "quantity": "int"
+        "max_health": "float",
+        "position": Vector2,
+        "inventory": "Array"
     }
 
 # Add typed properties...
@@ -286,21 +323,27 @@ func _get_schema() -> Dictionary:
 
 ```gdscript
 class PlayerFactory:
-    static func create_warrior() -> IPlayerData:
+    static func create_new_player(player_name: String, player_class: String) -> IPlayerData:
+        var base_health = {
+            "warrior": 150.0,
+            "mage": 80.0,
+            "rogue": 100.0
+        }
+
+        var health = base_health.get(player_class, 100.0)
+
         return IPlayerData.new({
-            "name": "Warrior",
+            "name": player_name,
             "level": 1,
-            "health": 150.0,
-            "position": Vector2.ZERO
+            "health": health,
+            "max_health": health,
+            "position": Vector2.ZERO,
+            "inventory": []
         })
 
-    static func create_mage() -> IPlayerData:
-        return IPlayerData.new({
-            "name": "Mage",
-            "level": 1,
-            "health": 80.0,
-            "position": Vector2.ZERO
-        })
+# Usage
+var warrior = PlayerFactory.create_new_player("Conan", "warrior")
+var mage = PlayerFactory.create_new_player("Gandalf", "mage")
 ```
 
 ### Pattern 2: Builder Pattern
@@ -309,30 +352,31 @@ class PlayerFactory:
 class QuestBuilder:
     var _data: Dictionary = {}
 
+    func set_id(quest_id: String) -> QuestBuilder:
+        _data["id"] = quest_id
+        return self
+
     func set_title(title: String) -> QuestBuilder:
         _data["title"] = title
         return self
 
-    func set_description(desc: String) -> QuestBuilder:
-        _data["description"] = desc
-        return self
-
-    func add_objective(obj: String) -> QuestBuilder:
+    func add_objective(objective: String) -> QuestBuilder:
         if not _data.has("objectives"):
             _data["objectives"] = []
-        _data["objectives"].append(obj)
+        _data["objectives"].append(objective)
         return self
 
     func build() -> IQuest:
-        _data["status"] = "active"
-        _data["progress"] = 0.0
+        # Set defaults
+        _data.get_or_add("status", "active")
+        _data.get_or_add("progress", 0.0)
         return IQuest.new(_data)
 
 # Usage
 var quest = QuestBuilder.new() \
-    .set_title("First Quest") \
-    .set_description("Complete the tutorial") \
-    .add_objective("Talk to NPC") \
+    .set_id("first_fish") \
+    .set_title("First Catch") \
+    .add_objective("Catch any fish") \
     .build()
 ```
 
@@ -340,72 +384,50 @@ var quest = QuestBuilder.new() \
 
 ```gdscript
 class PlayerRepository:
-    var _storage: Dictionary = {}
+    var _players: Dictionary = {}  # id -> Dictionary
 
-    func save(id: String, player: IPlayerData) -> void:
-        _storage[id] = player.to_dict()
+    func save(player_id: String, player: IPlayerData) -> void:
+        _players[player_id] = player.to_dict()
 
-    func load(id: String) -> IPlayerData:
-        var data = _storage.get(id)
+    func load(player_id: String) -> IPlayerData:
+        var data = _players.get(player_id)
         return IPlayerData.new(data) if data else null
 
-    func get_all() -> Array:
-        var players: Array = []
-        for data in _storage.values():
-            players.append(IPlayerData.new(data))
-        return players
-```
+    func delete(player_id: String) -> void:
+        _players.erase(player_id)
 
-### Pattern 4: Service Layer
-
-```gdscript
-class InventoryService:
-    var _items: Array = []  # Array of IItem
-
-    func add_item(item: IItem) -> void:
-        # Check if item exists
-        for existing in _items:
-            if existing.id == item.id:
-                existing.quantity += item.quantity
-                return
-        _items.append(item)
-
-    func remove_item(item_id: String, amount: int = 1) -> bool:
-        for item in _items:
-            if item.id == item_id:
-                if item.quantity >= amount:
-                    item.quantity -= amount
-                    if item.quantity <= 0:
-                        _items.erase(item)
-                    return true
-        return false
-
-    func get_total_value() -> int:
-        var total = 0
-        for item in _items:
-            total += item.value * item.quantity
-        return total
+    func find_by_level(min_level: int) -> Array[IPlayerData]:
+        var results: Array[IPlayerData] = []
+        for data in _players.values():
+            var player = IPlayerData.new(data)
+            if player.level >= min_level:
+                results.append(player)
+        return results
 ```
 
 ---
 
 ## 🔧 Extending for Mods
 
-TypedDict is designed to be **mod-friendly**. Modders can extend your interfaces to add custom fields without breaking the base game.
+### Why ExtendableInterface?
 
-### Base Game Interface
+`ExtendableInterface` is specifically designed for data that mods might want to extend. It provides safe schema merging and helper methods.
+
+### Base Game: Use ExtendableInterface
 
 ```gdscript
-# scripts/interfaces/player_interfaces.gd
+# scripts/interfaces/player_data.gd
 class_name IPlayerData
-extends TypedDict
+extends ExtendableInterface
 
 func _get_schema() -> Dictionary:
     return {
         "name": "String",
         "level": "int",
         "health": "float",
-        "position": "Vector2"
+        "max_health": "float",
+        "position": Vector2,
+        "inventory": "Array"
     }
 
 var name: String:
@@ -415,28 +437,31 @@ var name: String:
 var level: int:
     get: return get_value("level", 1)
     set(value): set_value("level", value)
+
+# ... other properties
 ```
 
-### Mod Extension Pattern 1: Inheritance
-
-Modders can extend your interface to add new fields:
+### Mod: Extend the Interface
 
 ```gdscript
-# mods/magic_mod/player_data_extended.gd
-class_name IPlayerDataExtended
+# mods/magic_system/extended_player_data.gd
+class_name IPlayerDataMagic
 extends IPlayerData
 
 func _get_schema() -> Dictionary:
     var base_schema = super._get_schema()
+
     # Add mod-specific fields
     base_schema.merge({
         "mana": "float",
         "max_mana": "float",
-        "spell_power": "int"
+        "spell_power": "int",
+        "known_spells": "Array"
     })
+
     return base_schema
 
-# Add typed properties for mod fields
+# Add mod-specific typed properties
 var mana: float:
     get: return get_value("mana", 100.0)
     set(value): set_value("mana", value)
@@ -448,448 +473,83 @@ var max_mana: float:
 var spell_power: int:
     get: return get_value("spell_power", 10)
     set(value): set_value("spell_power", value)
+
+var known_spells: Array:
+    get: return get_value("known_spells", [])
+    set(value): set_value("known_spells", value)
 ```
 
-### Mod Extension Pattern 2: Composition
-
-For more complex mods, use composition instead of inheritance:
+### Using Extended Interfaces
 
 ```gdscript
-# mods/class_system/class_data.gd
-class_name IClassData
-extends TypedDict
+# Base game code works with either base or extended interfaces
+func save_player(player: IPlayerData) -> void:
+    var save_data = player.to_dict()  # Contains all fields (base + mod)
+    # Save to file...
 
-func _get_schema() -> Dictionary:
-    return {
-        "class_name": "String",
-        "abilities": "Array<String>",
-        "passive_bonuses": "Dictionary"
-    }
+func load_player(data: Dictionary) -> IPlayerData:
+    # Determine which class to use
+    if ModLoader.is_mod_active("magic_system"):
+        return IPlayerDataMagic.new(data)  # Includes mod fields
+    else:
+        return IPlayerData.new(data)  # Base fields only
+```
 
-# Mod's extended player data
-class_name IModPlayerData
+### Mod-Friendly Best Practices
+
+#### 1. **Use Nullable Fields for Optional Mod Data**
+
+```gdscript
+class IPlayerDataWithOptionalMods
 extends IPlayerData
 
 func _get_schema() -> Dictionary:
-    var base_schema = super._get_schema()
-    base_schema["class_data"] = "Dictionary"  # Will contain IClassData
-    return base_schema
-
-var class_data: IClassData:
-    get:
-        var data = get_value("class_data", {})
-        return IClassData.new(data) if data else null
-    set(value):
-        set_value("class_data", value.to_dict() if value else {})
-```
-
-### Mod Extension Pattern 3: Optional Fields
-
-Make mod fields optional using nullable types:
-
-```gdscript
-# mods/reputation_mod/player_data_extended.gd
-class_name IPlayerDataWithReputation
-extends IPlayerData
-
-func _get_schema() -> Dictionary:
-    var base_schema = super._get_schema()
-    # Optional fields - won't break base game saves
-    base_schema.merge({
-        "faction_reputation": "Dictionary?",  # Nullable
-        "alignment": "String?"  # Nullable
+    var schema = super._get_schema()
+    schema.merge({
+        "faction_reputation": "Dictionary?",  # Nullable - won't break base saves
+        "custom_data": "Dictionary?"  # Mods can store arbitrary data here
     })
-    return base_schema
-
-var faction_reputation: Dictionary:
-    get: return get_value("faction_reputation", {})
-    set(value): set_value("faction_reputation", value)
-
-var alignment: String:
-    get: return get_value("alignment", "neutral")
-    set(value): set_value("alignment", value)
+    return schema
 ```
 
-### Best Practices for Mod Support
-
-#### 1. **Use Loose Validation Mode**
-
-Allow mods to add extra fields without breaking validation:
+#### 2. **Provide Default Values**
 
 ```gdscript
-# Base game validation (loose mode - default)
-var player_data = IPlayerData.new(loaded_data)  # Extra fields allowed
-
-# Strict mode (not recommended for moddable games)
-assert(TypeInterfaces.validate(loaded_data, schema, true))  # Fails if extra fields
+var faction_reputation: Dictionary:
+    get: return get_value("faction_reputation", {})  # Empty dict if missing
+    set(value): set_value("faction_reputation", value)
 ```
 
-#### 2. **Version Your Save Data**
+#### 3. **Version Your Save Data**
 
 ```gdscript
 class_name ISaveData
-extends TypedDict
+extends ExtendableInterface
 
 func _get_schema() -> Dictionary:
     return {
         "version": "String",
-        "game_data": "Dictionary",
-        "mod_data": "Dictionary?"  # Mods can store custom data here
+        "player": "Dictionary",
+        "world": "Dictionary",
+        "mod_data": "Dictionary?"  # Mods store their data here
     }
-
-func save_game():
-    var save = ISaveData.new({
-        "version": "1.0.0",
-        "game_data": {...},
-        "mod_data": get_mod_data()  # Collect from all loaded mods
-    })
-```
-
-#### 3. **Provide Migration Helpers**
-
-```gdscript
-class DataMigrator:
-    static func migrate_player_data(old_data: Dictionary, from_version: String) -> Dictionary:
-        match from_version:
-            "1.0.0":
-                # Add new fields with defaults
-                old_data["new_field"] = "default_value"
-            "1.1.0":
-                # Transform data structure
-                old_data["stats"] = _convert_old_stats(old_data.get("old_stats", {}))
-        return old_data
-```
-
-#### 4. **Document Extension Points**
-
-```gdscript
-## Player Data Interface
-##
-## MODDERS: You can extend this interface to add custom player data.
-## Example:
-##   class_name IPlayerDataExtended extends IPlayerData
-##   func _get_schema() -> Dictionary:
-##       var schema = super._get_schema()
-##       schema.merge({"custom_field": "String"})
-##       return schema
-##
-class_name IPlayerData
-extends TypedDict
-```
-
-### Example: Complete Mod Integration
-
-```gdscript
-# Base game
-class_name GameManager
-
-var player: IPlayerData
-
-func create_player() -> IPlayerData:
-    # Check if any mod has extended the player interface
-    var player_class = _get_extended_player_class()
-    return player_class.new({
-        "name": "Hero",
-        "level": 1,
-        "health": 100.0,
-        "position": Vector2.ZERO
-    })
-
-func _get_extended_player_class():
-    # Let mods register their extended classes
-    if ModLoader.has_extended_class("IPlayerData"):
-        return ModLoader.get_extended_class("IPlayerData")
-    return IPlayerData
 ```
 
 ---
 
 ## ⚡ Performance
 
-### Runtime Validation Cost
+### Validation Cost
 
-Validation **only runs when you create or modify TypedDict instances**. It does NOT run on every property access.
+Validation happens **only during object creation** using `assert()`:
 
 ```gdscript
-# Validation happens here (once)
+# Validation runs here (in debug builds only)
 var player = IPlayerData.new({...})
 
 # No validation - direct property access
-print(player.name)  # Fast!
-print(player.level)  # Fast!
+print(player.name)  # ✅ Fast
+print(player.level)  # ✅ Fast
 
-# Validation happens here (if using set_value)
-player.set_value("level", 10)  # Validates
-
-# No validation - direct property setter
-player.level = 10  # Fast! (if you defined the property)
+# Validation runs here (in debug builds
 ```
-
-### Production Builds
-
-Validation uses `assert()` which is **automatically removed** in release builds by Godot. No manual changes needed!
-
-```gdscript
-# In TypedDict._init():
-assert(TypeInterfaces.validate(initial_data, schema))
-# ↑ This line disappears in release builds!
-```
-
-### Performance Tips
-
-✅ **Cache interface instances** - Don't recreate on every frame
-✅ **Use typed properties** - Faster than `get_value()` calls
-✅ **Validate once** - Create validated objects, then pass them around
-❌ **Don't validate in loops** - Create validated objects outside hot paths
-
----
-
-## 📚 API Reference
-
-### TypedDict Base Class
-
-#### Methods
-
-```gdscript
-func _get_schema() -> Dictionary
-```
-
-**Override this** to define your interface structure. Return a dictionary mapping field names to type strings.
-
-**Example:**
-
-```gdscript
-func _get_schema() -> Dictionary:
-    return {
-        "name": "String",
-        "level": "int",
-        "health": "float"
-    }
-```
-
----
-
-```gdscript
-func to_dict() -> Dictionary
-```
-
-Returns a duplicate of the internal dictionary data.
-
-**Returns:** Dictionary containing all field data
-
-**Example:**
-
-```gdscript
-var player = IPlayerData.new({...})
-var save_data = player.to_dict()
-```
-
----
-
-```gdscript
-func get_value(key: String, default = null) -> Variant
-```
-
-Safely get a value with an optional default.
-
-**Parameters:**
-
-- `key`: Field name to retrieve
-- `default`: Value to return if key doesn't exist
-
-**Returns:** Field value or default
-
-**Example:**
-
-```gdscript
-var level = player.get_value("level", 1)
-```
-
----
-
-```gdscript
-func set_value(key: String, value: Variant) -> void
-```
-
-Set a value with validation (asserts in debug builds).
-
-**Parameters:**
-
-- `key`: Field name to set
-- `value`: New value for the field
-
-**Example:**
-
-```gdscript
-player.set_value("level", 10)
-```
-
----
-
-```gdscript
-func has_key(key: String) -> bool
-```
-
-Check if a key exists in the data.
-
-**Returns:** `true` if key exists
-
----
-
-```gdscript
-func keys() -> Array
-```
-
-Get all keys in the data.
-
-**Returns:** Array of all field names
-
----
-
-```gdscript
-func values() -> Array
-```
-
-Get all values in the data.
-
-**Returns:** Array of all field values
-
----
-
-```gdscript
-func update(data: Dictionary) -> void
-```
-
-Merge multiple fields at once with validation.
-
-**Parameters:**
-
-- `data`: Dictionary of fields to merge
-
-**Example:**
-
-```gdscript
-player.update({
-    "level": 10,
-    "health": 150.0
-})
-```
-
----
-
-### TypeInterfaces Singleton
-
-```gdscript
-TypeInterfaces.validate(data: Dictionary, schema: Dictionary, strict: bool = false) -> bool
-```
-
-Manually validate a dictionary against a schema.
-
-**Parameters:**
-
-- `data`: Dictionary to validate
-- `schema`: Schema definition (same format as `_get_schema()`)
-- `strict`: If `true`, disallows extra fields not in schema
-
-**Returns:** `true` if valid, `false` otherwise
-
-**Example:**
-
-```gdscript
-var is_valid = TypeInterfaces.validate(
-    {"name": "Hero", "level": 5},
-    {"name": "String", "level": "int"}
-)
-```
-
----
-
-## 📖 Examples
-
-Check out the included example files:
-
-- **`scripts/examples/basic_usage.gd`** - Creating, modifying, and converting TypedDicts
-- **`scripts/examples/advanced_patterns.gd`** - Factory, Builder, Repository, and Service patterns
-
-### Example: Complete Save/Load System
-
-```gdscript
-extends Node
-
-var player: IPlayerData
-
-func _ready():
-    # Create new player
-    player = IPlayerData.new({
-        "name": "Hero",
-        "level": 1,
-        "health": 100.0,
-        "position": Vector2.ZERO
-    })
-
-func save_game():
-    var save_file = FileAccess.open("user://savegame.json", FileAccess.WRITE)
-    var save_data = {
-        "player": player.to_dict(),
-        "timestamp": Time.get_unix_time_from_system()
-    }
-    save_file.store_string(JSON.stringify(save_data))
-
-func load_game():
-    if not FileAccess.file_exists("user://savegame.json"):
-        return
-
-    var save_file = FileAccess.open("user://savegame.json", FileAccess.READ)
-    var json = JSON.parse_string(save_file.get_as_text())
-
-    # Validated automatically on creation
-    player = IPlayerData.new(json["player"])
-    print("Loaded player: ", player.name, " at level ", player.level)
-```
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### Development Setup
-
-1. Clone the repository
-2. Open in Godot 4.0+
-3. Enable the plugin in Project Settings → Plugins
-4. Run the example scenes in `scripts/examples`
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
----
-
-## 🙏 Acknowledgments
-
-- Inspired by TypeScript interfaces and Python ORMs
-- Built for the Godot community
-- Thanks to all contributors!
-
----
-
-## 📞 Support
-
-- **Issues**: Report bugs or request features via GitHub Issues
-- **Discussions**: Share ideas and ask questions
-- **Discord**: Join the Godot community on Discord
-
----
-
-<p align="center">Made with ❤️ for Godot developers</p>
-
-
