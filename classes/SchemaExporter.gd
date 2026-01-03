@@ -4,7 +4,9 @@ class_name SchemaExporter
 extends RefCounted
 
 # Directory for schema viewer JSON files
-const VIEWER_SCHEMAS_DIR = "res://addons/godot-addon-dictionary-type-interfaces/schema_viewer/schemas/"
+const VIEWER_SCHEMAS_DIR = (
+	"res://addons/godot-addon-dictionary-type-interfaces/schema_viewer/schemas/"
+)
 
 # Load the utility class to get interfaces directory
 static var GetInterfacesDir = preload("../src/utils/get_interfaces_dir.gd")
@@ -1034,3 +1036,4 @@ static func _extract_var_info(var_line: String, is_export: bool) -> Dictionary:
 	return info
 
 # gdlint: disable=max-file-lines
+
