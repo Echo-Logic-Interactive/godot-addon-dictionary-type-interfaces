@@ -1,4 +1,4 @@
-# 🎯 TypedDict - Type-Safe Data Objects for Godot
+# 🎯 Dictionary Type Interfaces for Godot
 
 [![Godot](https://img.shields.io/badge/Godot-4.0+-blue.svg)](https://godotengine.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -29,14 +29,14 @@
 
 ## ✨ Features
 
-✅ **Runtime Type Validation** - Catch data structure errors before they cause crashes
-✅ **ORM-Style Data Objects** - Define schemas as classes, create validated instances
-✅ **IDE Autocomplete** - Full IntelliSense support with typed properties
-✅ **Zero Boilerplate** - Simple inheritance pattern, no manual validation calls
-✅ **Flexible Validation** - Strict or loose modes for different use cases
-✅ **Dictionary Compatible** - Easy conversion to/from dictionaries for save/load
-✅ **Mod-Friendly** - Extend and override interfaces for custom content
-✅ **Production Ready** - Validation can be stripped in release builds
+✅ **Runtime Type Validation** - Catch data structure errors before they cause crashes<br>
+✅ **ORM-Style Data Objects** - Define schemas as classes, create validated instances<br>
+✅ **IDE Autocomplete** - Full IntelliSense support with typed properties<br>
+✅ **Zero Boilerplate** - Simple inheritance pattern, no manual validation calls<br>
+✅ **Flexible Validation** - Strict or loose modes for different use cases<br>
+✅ **Dictionary Compatible** - Easy conversion to/from dictionaries for save/load<br>
+✅ **Mod-Friendly** - Extend and override interfaces for custom content<br>
+✅ **Production Ready** - Validation can be stripped in release builds<br>
 
 ---
 
